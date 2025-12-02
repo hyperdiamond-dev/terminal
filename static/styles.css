@@ -1,131 +1,140 @@
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-* {
-  margin: 0;
-}
-button {
-  color: inherit;
-}
-button, [role="button"] {
-  cursor: pointer;
-}
-code {
-  font-family:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-    "Courier New", monospace;
-  font-size: 1em;
-}
-img,
-svg {
-  display: block;
-}
-img,
-video {
-  max-width: 100%;
-  height: auto;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   BACKROOMS VISUAL EFFECTS
+   ============================================ */
+
+@layer utilities {
+  /* Film Grain Effect */
+  .effect-grain::before,
+  .effect-grain-heavy::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9998;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noise)" opacity="1"/></svg>');
+    background-repeat: repeat;
+    opacity: 0.03;
+  }
+
+  .effect-grain-heavy::before {
+    opacity: 0.08;
+    animation: grain-wobble 0.15s steps(8) infinite;
+  }
+
+  /* CRT Vignette Effect */
+  .effect-crt-vignette {
+    position: relative;
+  }
+
+  .effect-crt-vignette::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9996;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0.15) 100%
+    );
+  }
+
+  /* Chromatic Aberration Effect */
+  .effect-chromatic h1,
+  .effect-chromatic h2,
+  .effect-chromatic h3 {
+    position: relative;
+  }
+
+  .effect-chromatic h1::before,
+  .effect-chromatic h2::before,
+  .effect-chromatic h3::before {
+    content: attr(data-text);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    text-shadow: -2px 0 #00ff00, 2px 0 #ff8800;
+    opacity: 0.6;
+    mix-blend-mode: screen;
+    pointer-events: none;
+  }
+
+  /* Glitch Effect */
+  .effect-glitch {
+    position: relative;
+  }
+
+  /* VHS Tracking Effect */
+  .effect-vhs-tracking {
+    position: relative;
+  }
+
+  .effect-vhs-tracking::after {
+    content: "";
+    position: fixed;
+    left: 0;
+    width: 100%;
+    height: 8px;
+    background: linear-gradient(
+      to right,
+      transparent 0%,
+      rgba(0, 0, 0, 0.3) 20%,
+      rgba(0, 0, 0, 0.5) 40%,
+      rgba(0, 0, 0, 0.3) 60%,
+      transparent 80%
+    );
+    opacity: 0.7;
+    pointer-events: none;
+    z-index: 9995;
+    animation: vhs-tracking 3s ease-in-out infinite;
+    top: 30%;
+  }
+
+  @keyframes vhs-tracking {
+    0%,
+    100% {
+      top: 30%;
+      opacity: 0.7;
+    }
+    50% {
+      top: 70%;
+      opacity: 0.4;
+    }
+  }
 }
 
-html {
-  line-height: 1.5;
-  -webkit-text-size-adjust: 100%;
-  font-family:
-    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
-    "Noto Color Emoji";
+@layer base {
+  body {
+    @apply font-mono bg-backrooms-wall text-terminal-black min-h-screen;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-mono font-bold tracking-wide;
+  }
 }
-.transition-colors {
-  transition-property: background-color, border-color, color, fill, stroke;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}
-.my-6 {
-  margin-bottom: 1.5rem;
-  margin-top: 1.5rem;
-}
-.text-4xl {
-  font-size: 2.25rem;
-  line-height: 2.5rem;
-}
-.mx-2 {
-  margin-left: 0.5rem;
-  margin-right: 0.5rem;
-}
-.my-4 {
-  margin-bottom: 1rem;
-  margin-top: 1rem;
-}
-.mx-auto {
-  margin-left: auto;
-  margin-right: auto;
-}
-.px-4 {
-  padding-left: 1rem;
-  padding-right: 1rem;
-}
-.py-8 {
-  padding-bottom: 2rem;
-  padding-top: 2rem;
-}
-.bg-\[\#86efac\] {
-  background-color: #86efac;
-}
-.text-3xl {
-  font-size: 1.875rem;
-  line-height: 2.25rem;
-}
-.py-6 {
-  padding-bottom: 1.5rem;
-  padding-top: 1.5rem;
-}
-.px-2 {
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
-}
-.py-1 {
-  padding-bottom: 0.25rem;
-  padding-top: 0.25rem;
-}
-.border-gray-500 {
-  border-color: #6b7280;
-}
-.bg-white {
-  background-color: #fff;
-}
-.flex {
-  display: flex;
-}
-.gap-8 {
-  grid-gap: 2rem;
-  gap: 2rem;
-}
-.font-bold {
-  font-weight: 700;
-}
-.max-w-screen-md {
-  max-width: 768px;
-}
-.flex-col {
-  flex-direction: column;
-}
-.items-center {
-  align-items: center;
-}
-.justify-center {
-  justify-content: center;
-}
-.border-2 {
-  border-width: 2px;
-}
-.rounded {
-  border-radius: 0.25rem;
-}
-.hover\:bg-gray-200:hover {
-  background-color: #e5e7eb;
-}
-.tabular-nums {
-  font-variant-numeric: tabular-nums;
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .effect-grain::before,
+  .effect-grain-heavy::before,
+  .effect-vhs-tracking::after {
+    animation: none !important;
+  }
 }

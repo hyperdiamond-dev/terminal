@@ -23,6 +23,15 @@ export interface LoginResponse {
   user: User;
 }
 
+export interface AnonymousUserResponse {
+  success: boolean;
+  credentials: {
+    username: string;
+    password: string;
+  };
+  message: string;
+}
+
 export interface Module {
   id: number;
   name: string;
@@ -109,8 +118,8 @@ class ApiClient {
 
   // Auth endpoints
   // deno-lint-ignore require-await
-  async createAnonymousUser(): Promise<LoginResponse> {
-    return this.request<LoginResponse>("/api/auth/create-anonymous", {
+  async createAnonymousUser(): Promise<AnonymousUserResponse> {
+    return this.request<AnonymousUserResponse>("/api/auth/create-anonymous", {
       method: "POST",
     });
   }
