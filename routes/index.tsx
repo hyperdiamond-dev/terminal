@@ -3,35 +3,32 @@ export default function Home() {
     <div class="container mx-auto py-8 px-4">
       <div class="max-w-screen-md mx-auto flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
         <div class="text-center">
-          <h1 class="text-4xl font-bold text-crt-green text-shadow-crt-green my-6 uppercase">
+          <h1 class="text-5xl font-bold text-vhs-white text-shadow-vhs-red my-8 uppercase tracking-wider">
             TERMINAL UTOPIA
           </h1>
 
-          <div class="my-8 px-4 space-y-4">
-            <p class="text-lg text-terminal-black">
+          <div class="my-10 px-4 space-y-3">
+            <p class="text-base text-vhs-white-dim font-medium">
               &gt; RESEARCH PLATFORM v1.0.0
             </p>
-            <p class="text-lg text-terminal-black">
+            <p class="text-base text-vhs-white-dim font-medium">
               &gt; ANONYMOUS PARTICIPANT SYSTEM
-            </p>
-            <p class="text-lg text-terminal-black">
-              &gt; SEQUENTIAL MODULE PROGRESSION
             </p>
           </div>
 
-          <div class="my-8">
+          <div class="my-10">
             <a
               href="/new-user"
-              class="inline-block border-2 border-crt-green px-8 py-4 text-crt-green font-bold uppercase text-lg transition-colors shadow-border-glow text-shadow-crt-green bg-crt-green/5 hover:bg-crt-green/10"
+              class="inline-block border-2 border-analog-red px-10 py-5 text-analog-red font-bold uppercase text-lg transition-all duration-300 shadow-vhs-glow text-shadow-void-text bg-decay-ash/40 hover:bg-analog-red/20 hover:shadow-vhs-glow hover:text-vhs-white"
             >
-              &gt; BEGIN SESSION
+              &gt; F I N D &nbsp; Y O U R S E L F
             </a>
           </div>
 
-          <div class="my-8 text-sm text-terminal-gray space-y-1">
+          <div class="my-8 text-sm text-vhs-gray space-y-1 font-medium">
             <p>&gt; AUTHORIZED PERSONNEL ONLY</p>
             <p>&gt; ALL SESSIONS ARE MONITORED</p>
-            <p class="text-crt-amber text-shadow-crt-amber">
+            <p class="text-analog-purple text-shadow-vhs-purple">
               &gt; SYSTEM STATUS: OPERATIONAL
             </p>
           </div>

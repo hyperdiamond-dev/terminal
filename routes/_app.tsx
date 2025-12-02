@@ -12,7 +12,7 @@ export default function App({ Component, url }: PageProps) {
 
   // Apply effect classes based on page type
   const effectClasses = isStaticPage
-    ? "effect-grain-heavy effect-crt-vignette effect-vhs-tracking effect-glitch"
+    ? "effect-grain-heavy effect-crt-vignette effect-glitch"
     : "effect-grain effect-crt-vignette effect-chromatic";
 
   // Extract module name from URL if present
@@ -32,10 +32,12 @@ export default function App({ Component, url }: PageProps) {
         <link rel="stylesheet" href="/styles.css" />
       </head>
       <body class={effectClasses}>
-        <Header currentPath={currentPath} moduleName={moduleName} />
-        <main id="main-content" class="pt-[60px] min-h-screen">
-          <Component />
-        </main>
+        <div class="relative z-10">
+          <Header currentPath={currentPath} moduleName={moduleName} />
+          <main id="main-content" class="pt-[60px] min-h-screen">
+            <Component />
+          </main>
+        </div>
       </body>
     </html>
   );

@@ -7,23 +7,32 @@ export default {
   theme: {
     extend: {
       colors: {
-        backrooms: {
-          wall: "#e8dcc4",
-          "wall-dark": "#d4c5a9",
-          carpet: "#8b7355",
-        },
-        fluorescent: {
-          DEFAULT: "#fffacd",
-          dim: "#f5f5dc",
-        },
-        crt: {
-          green: "#00ff00",
-          "green-dark": "#00cc00",
-          amber: "#ff8800",
-        },
-        terminal: {
+        vhs: {
+          white: "#e8e8e8",
+          "white-dim": "#c0c0c0",
+          "white-dirty": "#a0a0a0",
+          gray: "#808080",
+          "gray-dark": "#404040",
           black: "#0a0a0a",
-          gray: "#2a2a2a",
+          "static-light": "#d0d0d0",
+          "static-dark": "#303030",
+        },
+        analog: {
+          red: "#ff3366",
+          "red-dim": "#cc2244",
+          blue: "#3366ff",
+          "blue-dim": "#2244cc",
+          purple: "#9933ff",
+          "purple-dim": "#7722cc",
+          cyan: "#33ffff",
+          "cyan-dim": "#22cccc",
+        },
+        decay: {
+          void: "#000000",
+          "void-soft": "#0d0d0d",
+          ash: "#1a1a1a",
+          smoke: "#262626",
+          dust: "#333333",
         },
       },
       fontFamily: {
@@ -36,22 +45,30 @@ export default {
         ],
       },
       boxShadow: {
-        "crt-glow":
-          "0 0 8px rgba(0, 255, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)",
-        "crt-glow-strong":
-          "0 0 20px rgba(0, 255, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.5)",
-        "border-glow":
-          "0 0 8px rgba(0, 255, 0, 0.3), inset 0 0 8px rgba(0, 255, 0, 0.1)",
-        "header-glow":
-          "0 4px 12px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 255, 0, 0.3)",
+        "vhs-glow":
+          "0 0 16px rgba(255, 51, 102, 0.4), 0 2px 8px rgba(0, 0, 0, 0.8)",
+        "vhs-glow-blue":
+          "0 0 16px rgba(51, 102, 255, 0.4), 0 2px 8px rgba(0, 0, 0, 0.8)",
+        "vhs-glow-purple":
+          "0 0 16px rgba(153, 51, 255, 0.3), 0 2px 8px rgba(0, 0, 0, 0.8)",
+        "static-border":
+          "0 0 4px rgba(192, 192, 192, 0.3), inset 0 0 4px rgba(48, 48, 48, 0.5)",
+        "void-deep":
+          "0 8px 32px rgba(0, 0, 0, 0.95), inset 0 2px 8px rgba(0, 0, 0, 0.9)",
+        "decay-edge": "0 4px 16px rgba(0, 0, 0, 0.9)",
       },
       textShadow: {
-        "crt-green":
-          "0 0 8px rgba(0, 255, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)",
-        "crt-amber":
-          "0 0 8px rgba(255, 136, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3)",
-        "crt-glow": "0 0 10px currentColor",
-        "crt-glow-strong": "0 0 20px currentColor, 0 0 30px currentColor",
+        "vhs-red":
+          "0 0 8px rgba(255, 51, 102, 0.6), 2px 2px 4px rgba(0, 0, 0, 0.9)",
+        "vhs-blue":
+          "0 0 8px rgba(51, 102, 255, 0.6), 2px 2px 4px rgba(0, 0, 0, 0.9)",
+        "vhs-purple":
+          "0 0 8px rgba(153, 51, 255, 0.6), 2px 2px 4px rgba(0, 0, 0, 0.9)",
+        "vhs-white":
+          "0 0 4px rgba(232, 232, 232, 0.4), 1px 1px 2px rgba(0, 0, 0, 0.9)",
+        "static-text":
+          "1px 1px 2px rgba(192, 192, 192, 0.3), 0 0 4px rgba(48, 48, 48, 0.8)",
+        "void-text": "2px 2px 6px rgba(0, 0, 0, 1)",
       },
       animation: {
         "grain-wobble": "grain-wobble 0.15s steps(8) infinite",
@@ -73,7 +90,16 @@ export default {
     },
   },
   plugins: [
-    function ({ matchUtilities, theme }: any) {
+    function ({
+      matchUtilities,
+      theme,
+    }: {
+      matchUtilities: (
+        utilities: Record<string, (value: string) => Record<string, string>>,
+        config: { values: Record<string, string> },
+      ) => void;
+      theme: (path: string) => Record<string, string>;
+    }) {
       matchUtilities(
         {
           "text-shadow": (value: string) => ({

@@ -45,7 +45,8 @@
     background: radial-gradient(
       ellipse at center,
       rgba(0, 0, 0, 0) 0%,
-      rgba(0, 0, 0, 0.15) 100%
+      rgba(0, 0, 0, 0.5) 70%,
+      rgba(0, 0, 0, 0.85) 100%
     );
   }
 
@@ -65,7 +66,7 @@
     top: 0;
     width: 100%;
     height: 100%;
-    text-shadow: -2px 0 #00ff00, 2px 0 #ff8800;
+    text-shadow: -2px 0 rgba(255, 51, 102, 0.5), 2px 0 rgba(51, 102, 255, 0.5);
     opacity: 0.6;
     mix-blend-mode: screen;
     pointer-events: none;
@@ -76,48 +77,84 @@
     position: relative;
   }
 
-  /* VHS Tracking Effect */
-  .effect-vhs-tracking {
-    position: relative;
+  /* Button Glitch on Hover */
+  a:hover,
+  button:hover {
+    animation: text-glitch 0.3s infinite;
   }
 
-  .effect-vhs-tracking::after {
-    content: "";
-    position: fixed;
-    left: 0;
-    width: 100%;
-    height: 8px;
-    background: linear-gradient(
-      to right,
-      transparent 0%,
-      rgba(0, 0, 0, 0.3) 20%,
-      rgba(0, 0, 0, 0.5) 40%,
-      rgba(0, 0, 0, 0.3) 60%,
-      transparent 80%
-    );
-    opacity: 0.7;
-    pointer-events: none;
-    z-index: 9995;
-    animation: vhs-tracking 3s ease-in-out infinite;
-    top: 30%;
-  }
-
-  @keyframes vhs-tracking {
-    0%,
-    100% {
-      top: 30%;
-      opacity: 0.7;
+  @keyframes text-glitch {
+    0% {
+      transform: translate(0);
+      text-shadow:
+        -2px 0 rgba(255, 51, 102, 0.8),
+        2px 0 rgba(51, 102, 255, 0.8);
     }
-    50% {
-      top: 70%;
-      opacity: 0.4;
+    20% {
+      transform: translate(-2px, 1px);
+      text-shadow:
+        2px 0 rgba(255, 51, 102, 0.8),
+        -2px 0 rgba(51, 102, 255, 0.8);
+    }
+    40% {
+      transform: translate(2px, -1px);
+      text-shadow:
+        -2px 0 rgba(51, 102, 255, 0.8),
+        2px 0 rgba(153, 51, 255, 0.8);
+    }
+    60% {
+      transform: translate(-1px, 2px);
+      text-shadow:
+        2px 0 rgba(153, 51, 255, 0.8),
+        -2px 0 rgba(255, 51, 102, 0.8);
+    }
+    80% {
+      transform: translate(1px, -2px);
+      text-shadow:
+        -2px 0 rgba(51, 102, 255, 0.8),
+        2px 0 rgba(255, 51, 102, 0.8);
+    }
+    100% {
+      transform: translate(0);
+      text-shadow:
+        -2px 0 rgba(255, 51, 102, 0.8),
+        2px 0 rgba(51, 102, 255, 0.8);
     }
   }
 }
 
 @layer base {
   body {
-    @apply font-mono bg-backrooms-wall text-terminal-black min-h-screen;
+    @apply font-mono bg-black text-vhs-white min-h-screen;
+    position: relative;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.95" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noise)" opacity="1"/></svg>');
+    background-repeat: repeat;
+    opacity: 0.08;
+    mix-blend-mode: screen;
+    animation: static-flicker 0.2s steps(2) infinite;
+  }
+
+  @keyframes static-flicker {
+    0% {
+      opacity: 0.06;
+    }
+    50% {
+      opacity: 0.08;
+    }
+    100% {
+      opacity: 0.07;
+    }
   }
 
   h1,
@@ -126,7 +163,7 @@
   h4,
   h5,
   h6 {
-    @apply font-mono font-bold tracking-wide;
+    @apply font-mono font-bold tracking-wide text-vhs-white;
   }
 }
 
@@ -134,7 +171,9 @@
 @media (prefers-reduced-motion: reduce) {
   .effect-grain::before,
   .effect-grain-heavy::before,
-  .effect-vhs-tracking::after {
+  a:hover,
+  button:hover,
+  body::before {
     animation: none !important;
   }
 }
