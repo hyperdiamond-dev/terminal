@@ -1,39 +1,131 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
 
+const API_BASE_URL =
+  Deno.env.get("API_BASE_URL") || "http://localhost:8000";
+
+interface ConsentVersion {
+  version: string;
+  title: string;
+  content_text: string;
+  content_url?: string;
+  effective_date: string;
+}
+
+interface ConsentStatus {
+  has_consented: boolean;
+  latest_consent: {
+    id: number;
+    version: string;
+    consented_at: string;
+  } | null;
+}
+
 interface ConsentData {
-  consentText?: string;
+  consentVersion?: ConsentVersion;
+  consentStatus?: ConsentStatus;
+  alreadyConsented?: boolean;
   error?: string;
 }
 
 export const handler: Handlers<ConsentData> = {
-  GET(_req, ctx) {
+  async GET(req, ctx) {
+    const cookies = req.headers.get("cookie");
+    const authToken = cookies
+      ?.split(";")
+      .find((c) => c.trim().startsWith("auth_token="))
+      ?.split("=")[1];
+
+    if (!authToken) {
+      return new Response(null, {
+        status: 303,
+        headers: { Location: "/" },
+      });
+    }
+
     try {
-      // TODO: Implement API call to get consent module
-      // const response = await api.getConsentModule();
+      // Fetch current consent version (public endpoint)
+      const versionResponse = await fetch(
+        `${API_BASE_URL}/api/consent/version/current`,
+      );
 
-      // Placeholder consent text
-      const consentText =
-        `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+      if (!versionResponse.ok) {
+        throw new Error("Failed to fetch consent version");
+      }
 
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+      const consentVersion: ConsentVersion = await versionResponse.json();
 
-Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.`;
+      // Fetch user's consent status
+      const statusResponse = await fetch(
+        `${API_BASE_URL}/api/consent/status`,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
 
-      return ctx.render({ consentText });
+      let consentStatus: ConsentStatus | undefined;
+      if (statusResponse.ok) {
+        consentStatus = await statusResponse.json();
+
+        // If already consented, redirect to modules
+        if (consentStatus?.has_consented) {
+          return new Response(null, {
+            status: 303,
+            headers: { Location: "/modules" },
+          });
+        }
+      }
+
+      return ctx.render({
+        consentVersion,
+        consentStatus,
+      });
     } catch (error) {
       return ctx.render({ error: error.message });
     }
   },
 
-  POST(_req, _ctx) {
-    try {
-      // TODO: Implement API call to submit consent
-      // const response = await api.submitConsent();
+  async POST(req, _ctx) {
+    const cookies = req.headers.get("cookie");
+    const authToken = cookies
+      ?.split(";")
+      .find((c) => c.trim().startsWith("auth_token="))
+      ?.split("=")[1];
 
-      // Placeholder - redirect to dashboard after consent
+    if (!authToken) {
       return new Response(null, {
         status: 303,
-        headers: { Location: "/dashboard" },
+        headers: { Location: "/" },
+      });
+    }
+
+    try {
+      // Submit consent
+      const response = await fetch(`${API_BASE_URL}/api/consent`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          responses: {
+            agreed: true,
+            agreed_at: new Date().toISOString(),
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to submit consent");
+      }
+
+      // Redirect to modules after successful consent
+      return new Response(null, {
+        status: 303,
+        headers: { Location: "/modules" },
       });
     } catch (error) {
       return new Response(null, {
@@ -46,8 +138,12 @@ Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium dolor
   },
 };
 
-export default function ConsentPage({ data }: PageProps<ConsentData>) {
-  if (data?.error) {
+export default function ConsentPage({ data, url }: PageProps<ConsentData>) {
+  // Check for error in URL params
+  const urlError = url.searchParams.get("error");
+  const displayError = data?.error || urlError;
+
+  if (displayError) {
     return (
       <div class="container mx-auto py-8 px-4">
         <div class="max-w-screen-md mx-auto flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
@@ -61,11 +157,17 @@ export default function ConsentPage({ data }: PageProps<ConsentData>) {
                 &gt; FAILED TO LOAD CONSENT MODULE
               </p>
               <p class="text-lg text-analog-red text-shadow-vhs-red">
-                &gt; {data.error}
+                &gt; {displayError}
               </p>
             </div>
 
-            <div class="my-8">
+            <div class="my-8 space-x-4">
+              <a
+                href="/consent"
+                class="inline-block border-2 border-analog-purple px-8 py-4 text-analog-purple font-bold uppercase text-lg transition-colors shadow-vhs-glow-purple text-shadow-void-text bg-decay-smoke/30 hover:bg-decay-smoke/50"
+              >
+                &gt; TRY AGAIN
+              </a>
               <a
                 href="/"
                 class="inline-block border-2 border-analog-blue px-8 py-4 text-analog-blue font-bold uppercase text-lg transition-colors shadow-vhs-glow-blue text-shadow-void-text bg-decay-smoke/30 hover:bg-decay-smoke/50"
@@ -79,6 +181,8 @@ export default function ConsentPage({ data }: PageProps<ConsentData>) {
     );
   }
 
+  const { consentVersion } = data;
+
   return (
     <div class="container mx-auto py-8 px-4">
       <div class="max-w-screen-md mx-auto">
@@ -87,11 +191,32 @@ export default function ConsentPage({ data }: PageProps<ConsentData>) {
             INFORMED CONSENT
           </h1>
 
+          {consentVersion?.title && (
+            <p class="text-center text-vhs-gray text-sm mb-4">
+              &gt; VERSION: {consentVersion.version} | EFFECTIVE:{" "}
+              {new Date(consentVersion.effective_date).toLocaleDateString()}
+            </p>
+          )}
+
           <div class="my-8 px-6 py-6 border-2 border-analog-purple shadow-vhs-glow-purple bg-decay-smoke/30 max-h-[400px] overflow-y-auto">
             <div class="text-base text-vhs-white-dim leading-relaxed whitespace-pre-line">
-              {data.consentText}
+              {consentVersion?.content_text ||
+                "Loading consent information..."}
             </div>
           </div>
+
+          {consentVersion?.content_url && (
+            <div class="text-center mb-6">
+              <a
+                href={consentVersion.content_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-analog-blue hover:underline text-sm"
+              >
+                &gt; VIEW FULL DOCUMENT (OPENS IN NEW TAB)
+              </a>
+            </div>
+          )}
 
           <form method="POST" action="/consent" class="my-8">
             <div class="flex items-center justify-center my-6">
@@ -103,7 +228,7 @@ export default function ConsentPage({ data }: PageProps<ConsentData>) {
                   class="w-5 h-5 mr-3 bg-decay-smoke border-2 border-analog-purple accent-analog-purple"
                 />
                 <span class="text-lg text-vhs-white font-medium uppercase">
-                  &gt; I AGREE TO THE TERMS
+                  &gt; I HAVE READ AND AGREE TO THE TERMS
                 </span>
               </label>
             </div>
@@ -119,9 +244,9 @@ export default function ConsentPage({ data }: PageProps<ConsentData>) {
           </form>
 
           <div class="my-8 text-sm text-vhs-gray space-y-1 font-medium text-center">
-            <p>&gt; CONSENT REQUIRED TO PROCEED</p>
+            <p>&gt; CONSENT IS REQUIRED TO PARTICIPATE</p>
             <p class="text-analog-red text-shadow-vhs-red">
-              &gt; YOU MUST AGREE TO CONTINUE
+              &gt; YOUR RESPONSES WILL BE ANONYMOUS
             </p>
           </div>
         </div>
