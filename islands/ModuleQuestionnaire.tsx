@@ -223,6 +223,7 @@ export default function ModuleQuestionnaire({
                   onAnswer={() => {}}
                   value={responses.value[question.id]}
                   disabled={true}
+                  authToken={authToken}
                 />
               </div>
             ))}
@@ -326,6 +327,7 @@ export default function ModuleQuestionnaire({
                 onAnswer={handleAnswer}
                 value={responses.value[question.id]}
                 disabled={isCompleted}
+                authToken={authToken}
               />
             </div>
           ))}

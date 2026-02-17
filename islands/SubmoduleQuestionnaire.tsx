@@ -248,6 +248,7 @@ export default function SubmoduleQuestionnaire({
                   onAnswer={() => {}}
                   value={responses.value[question.id]}
                   disabled={true}
+                  authToken={authToken}
                 />
               </div>
             ))}
@@ -351,6 +352,7 @@ export default function SubmoduleQuestionnaire({
                 onAnswer={handleAnswer}
                 value={responses.value[question.id]}
                 disabled={false}
+                authToken={authToken}
               />
             </div>
           ))}
