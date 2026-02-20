@@ -1,5 +1,6 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
 import ModuleQuestionnaire from "../../islands/ModuleQuestionnaire.tsx";
+import MediaContent from "../../components/MediaContent.tsx";
 
 interface ModuleProgress {
   status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
@@ -36,8 +37,22 @@ interface QuestionInfo {
   } | null;
 }
 
+interface ContentItem {
+  id: number;
+  content_type: "video" | "image" | "audio";
+  title: string | null;
+  description: string | null;
+  url: string;
+  thumbnail_url: string | null;
+  duration_seconds: number | null;
+  sequence_order: number;
+  is_external: boolean;
+  metadata: Record<string, unknown>;
+}
+
 interface ModuleData {
   module?: {
+    id?: number;
     name: string;
     title: string;
     description: string | null;
@@ -49,6 +64,7 @@ interface ModuleData {
   can_review?: boolean;
   submodules?: SubmoduleInfo[];
   questions?: QuestionInfo[];
+  content?: ContentItem[];
   error?: string;
   authToken?: string;
 }
@@ -121,6 +137,24 @@ export const handler: Handlers<ModuleData> = {
         submodules = submodulesData.submodules || [];
       }
 
+      // Fetch media content for this module
+      let content: ContentItem[] = [];
+      if (moduleData.module?.id) {
+        const contentResponse = await fetch(
+          `${API_BASE_URL}/api/content/module/${moduleData.module.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+        if (contentResponse.ok) {
+          const contentData = await contentResponse.json();
+          content = contentData.content || [];
+        }
+      }
+
       // If no submodules, fetch questions directly
       let questions: QuestionInfo[] = [];
       if (submodules.length === 0) {
@@ -148,6 +182,7 @@ export const handler: Handlers<ModuleData> = {
         can_review: moduleData.can_review,
         submodules,
         questions,
+        content,
         authToken,
       });
     } catch (error) {
@@ -275,11 +310,13 @@ export default function ModulePage({ data }: PageProps<ModuleData>) {
     can_review,
     submodules = [],
     questions = [],
+    content = [],
     authToken,
   } = data;
 
   const hasSubmodules = submodules.length > 0;
   const hasQuestions = questions.length > 0;
+  const hasContent = content.length > 0;
 
   return (
     <div class="container mx-auto py-8 px-4">
@@ -315,6 +352,13 @@ export default function ModulePage({ data }: PageProps<ModuleData>) {
             )}
           </div>
         </div>
+
+        {/* Media Content */}
+        {hasContent && (
+          <div class="my-8">
+            <MediaContent content={content} />
+          </div>
+        )}
 
         {/* Submodules List */}
         {hasSubmodules && (

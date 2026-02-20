@@ -1,5 +1,6 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
 import SubmoduleQuestionnaire from "../../../islands/SubmoduleQuestionnaire.tsx";
+import MediaContent from "../../../components/MediaContent.tsx";
 
 interface SubmoduleProgress {
   status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
@@ -20,12 +21,26 @@ interface QuestionInfo {
   } | null;
 }
 
+interface ContentItem {
+  id: number;
+  content_type: "video" | "image" | "audio";
+  title: string | null;
+  description: string | null;
+  url: string;
+  thumbnail_url: string | null;
+  duration_seconds: number | null;
+  sequence_order: number;
+  is_external: boolean;
+  metadata: Record<string, unknown>;
+}
+
 interface SubmoduleData {
   module?: {
     name: string;
     title: string;
   };
   submodule?: {
+    id?: number;
     name: string;
     title: string;
     description: string | null;
@@ -35,6 +50,7 @@ interface SubmoduleData {
   accessible?: boolean;
   is_completed?: boolean;
   questions?: QuestionInfo[];
+  content?: ContentItem[];
   error?: string;
   authToken?: string;
 }
@@ -107,6 +123,24 @@ export const handler: Handlers<SubmoduleData> = {
         questions = questionsData.questions || [];
       }
 
+      // Fetch media content for this submodule
+      let content: ContentItem[] = [];
+      if (submoduleData.submodule?.id) {
+        const contentResponse = await fetch(
+          `${API_BASE_URL}/api/content/submodule/${submoduleData.submodule.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+        if (contentResponse.ok) {
+          const contentData = await contentResponse.json();
+          content = contentData.content || [];
+        }
+      }
+
       return ctx.render({
         module: {
           name: moduleName,
@@ -117,6 +151,7 @@ export const handler: Handlers<SubmoduleData> = {
         accessible: submoduleData.accessible,
         is_completed: submoduleData.progress?.status === "COMPLETED",
         questions,
+        content,
         authToken,
       });
     } catch (error) {
@@ -164,6 +199,7 @@ export default function SubmodulePage({ data }: PageProps<SubmoduleData>) {
     progress,
     is_completed,
     questions = [],
+    content = [],
     authToken,
   } = data;
 
@@ -211,6 +247,13 @@ export default function SubmodulePage({ data }: PageProps<SubmoduleData>) {
             )}
           </div>
         </div>
+
+        {/* Media Content */}
+        {content.length > 0 && (
+          <div class="my-8">
+            <MediaContent content={content} />
+          </div>
+        )}
 
         {/* Questionnaire */}
         {questions.length > 0 ? (
