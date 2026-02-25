@@ -3,6 +3,7 @@ import MultipleChoiceQuestion from "./MultipleChoiceQuestion.tsx";
 import TrueFalseQuestion from "./TrueFalseQuestion.tsx";
 import FillBlankQuestion from "./FillBlankQuestion.tsx";
 import FreeFormQuestion from "./FreeFormQuestion.tsx";
+import FileUploadQuestion from "./FileUploadQuestion.tsx";
 
 type ResponseValue = string | string[] | boolean;
 
@@ -11,6 +12,8 @@ interface QuestionRendererProps {
   onAnswer: (questionId: number, value: ResponseValue) => void;
   value?: ResponseValue;
   disabled?: boolean;
+  authToken?: string;
+  apiBaseUrl?: string;
 }
 
 export default function QuestionRenderer({
@@ -18,6 +21,8 @@ export default function QuestionRenderer({
   onAnswer,
   value,
   disabled = false,
+  authToken,
+  apiBaseUrl,
 }: QuestionRendererProps) {
   const handleAnswer = (val: ResponseValue) => {
     onAnswer(question.id, val);
@@ -61,6 +66,18 @@ export default function QuestionRenderer({
           onAnswer={handleAnswer as (value: string) => void}
           value={value as string | undefined}
           disabled={disabled}
+        />
+      );
+
+    case "file_upload":
+      return (
+        <FileUploadQuestion
+          question={question}
+          onAnswer={handleAnswer as (value: string) => void}
+          value={value as string | undefined}
+          disabled={disabled}
+          authToken={authToken || ""}
+          apiBaseUrl={apiBaseUrl || ""}
         />
       );
 

@@ -78,9 +78,7 @@ export default function FillBlankQuestion({
       <div class="mb-4">
         <p class="text-lg text-vhs-white font-medium">
           <span class="text-analog-cyan">&gt;</span> {question.question_text}
-          {question.is_required && (
-            <span class="text-analog-red ml-2">*</span>
-          )}
+          {question.is_required && <span class="text-analog-red ml-2">*</span>}
         </p>
       </div>
 

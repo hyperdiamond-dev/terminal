@@ -1,5 +1,7 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
 import SubmoduleQuestionnaire from "../../../islands/SubmoduleQuestionnaire.tsx";
+import MediaContent from "../../../components/MediaContent.tsx";
+import { getAuthToken } from "../../../lib/cookies.ts";
 
 interface SubmoduleProgress {
   status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
@@ -20,12 +22,26 @@ interface QuestionInfo {
   } | null;
 }
 
+interface ContentItem {
+  id: number;
+  content_type: "video" | "image" | "audio";
+  title: string | null;
+  description: string | null;
+  url: string;
+  thumbnail_url: string | null;
+  duration_seconds: number | null;
+  sequence_order: number;
+  is_external: boolean;
+  metadata: Record<string, unknown>;
+}
+
 interface SubmoduleData {
   module?: {
     name: string;
     title: string;
   };
   submodule?: {
+    id?: number;
     name: string;
     title: string;
     description: string | null;
@@ -35,20 +51,17 @@ interface SubmoduleData {
   accessible?: boolean;
   is_completed?: boolean;
   questions?: QuestionInfo[];
+  content?: ContentItem[];
   error?: string;
   authToken?: string;
+  apiBaseUrl?: string;
 }
 
-const API_BASE_URL =
-  Deno.env.get("API_BASE_URL") || "http://localhost:8000";
+const API_BASE_URL = Deno.env.get("API_BASE_URL") || "http://localhost:8000";
 
 export const handler: Handlers<SubmoduleData> = {
   async GET(req, ctx) {
-    const cookies = req.headers.get("cookie");
-    const authToken = cookies
-      ?.split(";")
-      .find((c) => c.trim().startsWith("auth_token="))
-      ?.split("=")[1];
+    const authToken = getAuthToken(req);
 
     if (!authToken) {
       return new Response(null, {
@@ -107,6 +120,24 @@ export const handler: Handlers<SubmoduleData> = {
         questions = questionsData.questions || [];
       }
 
+      // Fetch media content for this submodule
+      let content: ContentItem[] = [];
+      if (submoduleData.submodule?.id) {
+        const contentResponse = await fetch(
+          `${API_BASE_URL}/api/content/submodule/${submoduleData.submodule.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+        if (contentResponse.ok) {
+          const contentData = await contentResponse.json();
+          content = contentData.content || [];
+        }
+      }
+
       return ctx.render({
         module: {
           name: moduleName,
@@ -117,10 +148,14 @@ export const handler: Handlers<SubmoduleData> = {
         accessible: submoduleData.accessible,
         is_completed: submoduleData.progress?.status === "COMPLETED",
         questions,
+        content,
         authToken,
+        apiBaseUrl: API_BASE_URL,
       });
     } catch (error) {
-      return ctx.render({ error: error.message });
+      return ctx.render({
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
     }
   },
 };
@@ -164,7 +199,9 @@ export default function SubmodulePage({ data }: PageProps<SubmoduleData>) {
     progress,
     is_completed,
     questions = [],
+    content = [],
     authToken,
+    apiBaseUrl,
   } = data;
 
   return (
@@ -196,38 +233,52 @@ export default function SubmodulePage({ data }: PageProps<SubmoduleData>) {
 
           {/* Status indicator */}
           <div class="mt-6">
-            {is_completed ? (
-              <span class="inline-block px-4 py-2 border-2 border-analog-blue bg-analog-blue/20 text-analog-blue font-bold uppercase text-sm">
-                COMPLETED
-              </span>
-            ) : progress?.status === "IN_PROGRESS" ? (
-              <span class="inline-block px-4 py-2 border-2 border-analog-purple bg-analog-purple/20 text-analog-purple font-bold uppercase text-sm">
-                IN PROGRESS
-              </span>
-            ) : (
-              <span class="inline-block px-4 py-2 border-2 border-vhs-gray bg-vhs-gray-dark/50 text-vhs-gray font-bold uppercase text-sm">
-                NOT STARTED
-              </span>
-            )}
+            {is_completed
+              ? (
+                <span class="inline-block px-4 py-2 border-2 border-analog-blue bg-analog-blue/20 text-analog-blue font-bold uppercase text-sm">
+                  COMPLETED
+                </span>
+              )
+              : progress?.status === "IN_PROGRESS"
+              ? (
+                <span class="inline-block px-4 py-2 border-2 border-analog-purple bg-analog-purple/20 text-analog-purple font-bold uppercase text-sm">
+                  IN PROGRESS
+                </span>
+              )
+              : (
+                <span class="inline-block px-4 py-2 border-2 border-vhs-gray bg-vhs-gray-dark/50 text-vhs-gray font-bold uppercase text-sm">
+                  NOT STARTED
+                </span>
+              )}
           </div>
         </div>
 
-        {/* Questionnaire */}
-        {questions.length > 0 ? (
-          <SubmoduleQuestionnaire
-            moduleName={module?.name || ""}
-            submoduleName={submodule?.name || ""}
-            questions={questions}
-            isCompleted={is_completed || false}
-            authToken={authToken || ""}
-          />
-        ) : (
-          <div class="text-center my-16">
-            <p class="text-vhs-white-dim text-lg">
-              &gt; NO QUESTIONS IN THIS SECTION
-            </p>
+        {/* Media Content */}
+        {content.length > 0 && (
+          <div class="my-8">
+            <MediaContent content={content} />
           </div>
         )}
+
+        {/* Questionnaire */}
+        {questions.length > 0
+          ? (
+            <SubmoduleQuestionnaire
+              moduleName={module?.name || ""}
+              submoduleName={submodule?.name || ""}
+              questions={questions}
+              isCompleted={is_completed || false}
+              authToken={authToken || ""}
+              apiBaseUrl={apiBaseUrl || ""}
+            />
+          )
+          : (
+            <div class="text-center my-16">
+              <p class="text-vhs-white-dim text-lg">
+                &gt; NO QUESTIONS IN THIS SECTION
+              </p>
+            </div>
+          )}
 
         {/* Navigation */}
         <div class="my-8 text-center">

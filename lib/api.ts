@@ -55,10 +55,24 @@ export interface Submodule {
 export interface Question {
   id: number;
   question_text: string;
-  question_type: "true_false" | "multiple_choice" | "fill_blank" | "free_form";
+  question_type:
+    | "true_false"
+    | "multiple_choice"
+    | "fill_blank"
+    | "free_form"
+    | "file_upload";
   is_required: boolean;
   sequence_order: number;
   metadata: Record<string, unknown>;
+}
+
+export interface FileUploadMeta {
+  id: number;
+  original_filename: string;
+  mime_type: string;
+  file_size: number;
+  storage_url: string;
+  created_at: string;
 }
 
 export interface QuestionResponse {

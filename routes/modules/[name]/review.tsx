@@ -1,5 +1,6 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
 import QuestionRenderer from "../../../islands/QuestionRenderer.tsx";
+import { getAuthToken } from "../../../lib/cookies.ts";
 
 interface QuestionInfo {
   id: number;
@@ -29,16 +30,11 @@ interface ReviewData {
   error?: string;
 }
 
-const API_BASE_URL =
-  Deno.env.get("API_BASE_URL") || "http://localhost:8000";
+const API_BASE_URL = Deno.env.get("API_BASE_URL") || "http://localhost:8000";
 
 export const handler: Handlers<ReviewData> = {
   async GET(req, ctx) {
-    const cookies = req.headers.get("cookie");
-    const authToken = cookies
-      ?.split(";")
-      .find((c) => c.trim().startsWith("auth_token="))
-      ?.split("=")[1];
+    const authToken = getAuthToken(req);
 
     if (!authToken) {
       return new Response(null, {
@@ -130,7 +126,9 @@ export const handler: Handlers<ReviewData> = {
         completed_at: completedAt,
       });
     } catch (error) {
-      return ctx.render({ error: error.message });
+      return ctx.render({
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
     }
   },
 };
@@ -203,7 +201,8 @@ export default function ReviewPage({ data }: PageProps<ReviewData>) {
 
           {completed_at && (
             <p class="text-vhs-gray text-sm mt-4">
-              &gt; COMPLETED: {new Date(completed_at).toLocaleDateString()} at{" "}
+              &gt; COMPLETED: {new Date(completed_at).toLocaleDateString()} at
+              {" "}
               {new Date(completed_at).toLocaleTimeString()}
             </p>
           )}
@@ -217,38 +216,40 @@ export default function ReviewPage({ data }: PageProps<ReviewData>) {
         </div>
 
         {/* Questions with Responses */}
-        {questions.length > 0 ? (
-          <div class="space-y-6">
-            {questions
-              .sort((a, b) => a.sequence_order - b.sequence_order)
-              .map((question, index) => (
-                <div
-                  key={question.id}
-                  class="border-2 border-vhs-gray-dark bg-decay-smoke/20 p-4"
-                >
-                  <p class="text-vhs-gray text-xs mb-2">
-                    QUESTION {String(index + 1).padStart(2, "0")}
-                  </p>
-                  <QuestionRenderer
-                    question={question}
-                    onAnswer={() => {}}
-                    value={responses[String(question.id)] as
-                      | string
-                      | string[]
-                      | boolean
-                      | undefined}
-                    disabled={true}
-                  />
-                </div>
-              ))}
-          </div>
-        ) : (
-          <div class="text-center my-16">
-            <p class="text-vhs-white-dim text-lg">
-              &gt; NO QUESTIONS TO REVIEW
-            </p>
-          </div>
-        )}
+        {questions.length > 0
+          ? (
+            <div class="space-y-6">
+              {questions
+                .sort((a, b) => a.sequence_order - b.sequence_order)
+                .map((question, index) => (
+                  <div
+                    key={question.id}
+                    class="border-2 border-vhs-gray-dark bg-decay-smoke/20 p-4"
+                  >
+                    <p class="text-vhs-gray text-xs mb-2">
+                      QUESTION {String(index + 1).padStart(2, "0")}
+                    </p>
+                    <QuestionRenderer
+                      question={question}
+                      onAnswer={() => {}}
+                      value={responses[String(question.id)] as
+                        | string
+                        | string[]
+                        | boolean
+                        | undefined}
+                      disabled
+                    />
+                  </div>
+                ))}
+            </div>
+          )
+          : (
+            <div class="text-center my-16">
+              <p class="text-vhs-white-dim text-lg">
+                &gt; NO QUESTIONS TO REVIEW
+              </p>
+            </div>
+          )}
 
         {/* Navigation */}
         <div class="my-8 flex justify-center gap-4">

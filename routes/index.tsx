@@ -16,13 +16,23 @@ export default function Home() {
             </p>
           </div>
 
-          <div class="my-10">
-            <a
-              href="/new-user"
-              class="inline-block border-2 border-analog-red px-10 py-5 text-analog-red font-bold uppercase text-lg transition-all duration-300 shadow-vhs-glow text-shadow-void-text bg-decay-ash/40 hover:bg-analog-red/20 hover:shadow-vhs-glow hover:text-vhs-white"
-            >
-              &gt; F I N D &nbsp; Y O U R S E L F
-            </a>
+          <div class="my-10 space-y-4">
+            <div>
+              <a
+                href="/new-user"
+                class="inline-block border-2 border-analog-red px-10 py-5 text-analog-red font-bold uppercase text-lg transition-all duration-300 shadow-vhs-glow text-shadow-void-text bg-decay-ash/40 hover:bg-analog-red/20 hover:shadow-vhs-glow hover:text-vhs-white"
+              >
+                &gt; F I N D &nbsp; Y O U R S E L F
+              </a>
+            </div>
+            <div>
+              <a
+                href="/login"
+                class="inline-block border-2 border-vhs-gray px-8 py-3 text-vhs-gray font-bold uppercase text-sm transition-all duration-300 hover:border-vhs-white-dim hover:text-vhs-white-dim hover:bg-decay-smoke/50"
+              >
+                &gt; RETURNING PARTICIPANT
+              </a>
+            </div>
           </div>
 
           <div class="my-8 text-sm text-vhs-gray space-y-1 font-medium">
