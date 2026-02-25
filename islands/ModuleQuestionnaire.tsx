@@ -1,4 +1,4 @@
-import { useSignal, useComputed } from "@preact/signals";
+import { useComputed, useSignal } from "@preact/signals";
 import type { Question } from "../lib/api.ts";
 import QuestionRenderer from "./QuestionRenderer.tsx";
 
@@ -15,11 +15,10 @@ interface ModuleQuestionnaireProps {
   isCompleted: boolean;
   canReview: boolean;
   authToken: string;
+  apiBaseUrl: string;
 }
 
 type ResponseValue = string | string[] | boolean;
-
-const API_BASE_URL = "http://localhost:8000";
 
 export default function ModuleQuestionnaire({
   moduleName,
@@ -27,8 +26,9 @@ export default function ModuleQuestionnaire({
   isCompleted,
   canReview,
   authToken,
+  apiBaseUrl,
 }: ModuleQuestionnaireProps) {
-  const responses = useSignal<Record<number, ResponseValue>>(() => {
+  const responses = useSignal<Record<number, ResponseValue>>((() => {
     // Initialize with existing responses
     const initial: Record<number, ResponseValue> = {};
     for (const q of questions) {
@@ -37,7 +37,7 @@ export default function ModuleQuestionnaire({
       }
     }
     return initial;
-  });
+  })());
 
   const isStarted = useSignal(questions.some((q) => q.user_response !== null));
   const isSubmitting = useSignal(false);
@@ -77,7 +77,7 @@ export default function ModuleQuestionnaire({
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/modules/${moduleName}/start`,
+        `${apiBaseUrl}/api/modules/${moduleName}/start`,
         {
           method: "POST",
           headers: {
@@ -96,7 +96,9 @@ export default function ModuleQuestionnaire({
       success.value = "MODULE STARTED SUCCESSFULLY";
       setTimeout(() => (success.value = null), 3000);
     } catch (err) {
-      error.value = err instanceof Error ? err.message : "Failed to start module";
+      error.value = err instanceof Error
+        ? err.message
+        : "Failed to start module";
     } finally {
       isSubmitting.value = false;
     }
@@ -108,7 +110,7 @@ export default function ModuleQuestionnaire({
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/modules/${moduleName}/save`,
+        `${apiBaseUrl}/api/modules/${moduleName}/save`,
         {
           method: "POST",
           headers: {
@@ -127,7 +129,9 @@ export default function ModuleQuestionnaire({
       success.value = "PROGRESS SAVED";
       setTimeout(() => (success.value = null), 3000);
     } catch (err) {
-      error.value = err instanceof Error ? err.message : "Failed to save progress";
+      error.value = err instanceof Error
+        ? err.message
+        : "Failed to save progress";
     } finally {
       isSubmitting.value = false;
     }
@@ -141,7 +145,7 @@ export default function ModuleQuestionnaire({
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/modules/${moduleName}/complete`,
+        `${apiBaseUrl}/api/modules/${moduleName}/complete`,
         {
           method: "POST",
           headers: {
@@ -160,10 +164,12 @@ export default function ModuleQuestionnaire({
         throw new Error(data.error || "Failed to complete module");
       }
 
-      const data = await response.json();
+      await response.json();
       showCompletion.value = true;
     } catch (err) {
-      error.value = err instanceof Error ? err.message : "Failed to complete module";
+      error.value = err instanceof Error
+        ? err.message
+        : "Failed to complete module";
     } finally {
       isSubmitting.value = false;
     }
@@ -222,8 +228,9 @@ export default function ModuleQuestionnaire({
                   question={question}
                   onAnswer={() => {}}
                   value={responses.value[question.id]}
-                  disabled={true}
+                  disabled
                   authToken={authToken}
+                  apiBaseUrl={apiBaseUrl}
                 />
               </div>
             ))}
@@ -245,6 +252,7 @@ export default function ModuleQuestionnaire({
           </p>
 
           <button
+            type="button"
             onClick={startModule}
             disabled={isSubmitting.value}
             class={`
@@ -336,6 +344,7 @@ export default function ModuleQuestionnaire({
       {/* Action buttons */}
       <div class="my-8 flex justify-center gap-4">
         <button
+          type="button"
           onClick={saveProgress}
           disabled={isSubmitting.value}
           class={`
@@ -351,6 +360,7 @@ export default function ModuleQuestionnaire({
         </button>
 
         <button
+          type="button"
           onClick={completeModule}
           disabled={!canSubmit.value || isSubmitting.value}
           class={`

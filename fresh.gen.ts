@@ -4,30 +4,52 @@
 
 import * as $_404 from "./routes/_404.tsx";
 import * as $_app from "./routes/_app.tsx";
-import * as $api_joke from "./routes/api/joke.ts";
 import * as $consent from "./routes/consent.tsx";
 import * as $dashboard from "./routes/dashboard.tsx";
-import * as $greet_name_ from "./routes/greet/[name].tsx";
 import * as $index from "./routes/index.tsx";
+import * as $login from "./routes/login.tsx";
+import * as $logout from "./routes/logout.tsx";
+import * as $modules from "./routes/modules/index.tsx";
+import * as $modules_name_ from "./routes/modules/[name].tsx";
+import * as $modules_name_review from "./routes/modules/[name]/review.tsx";
+import * as $modules_name_submodule_ from "./routes/modules/[name]/[submodule].tsx";
 import * as $new_user from "./routes/new-user.tsx";
-import * as $Counter from "./islands/Counter.tsx";
+import * as $FillBlankQuestion from "./islands/FillBlankQuestion.tsx";
+import * as $FileUploadQuestion from "./islands/FileUploadQuestion.tsx";
+import * as $FreeFormQuestion from "./islands/FreeFormQuestion.tsx";
 import * as $MobileMenu from "./islands/MobileMenu.tsx";
+import * as $ModuleQuestionnaire from "./islands/ModuleQuestionnaire.tsx";
+import * as $MultipleChoiceQuestion from "./islands/MultipleChoiceQuestion.tsx";
+import * as $QuestionRenderer from "./islands/QuestionRenderer.tsx";
+import * as $SubmoduleQuestionnaire from "./islands/SubmoduleQuestionnaire.tsx";
+import * as $TrueFalseQuestion from "./islands/TrueFalseQuestion.tsx";
 import type { Manifest } from "$fresh/server.ts";
 
 const manifest = {
   routes: {
     "./routes/_404.tsx": $_404,
     "./routes/_app.tsx": $_app,
-    "./routes/api/joke.ts": $api_joke,
     "./routes/consent.tsx": $consent,
     "./routes/dashboard.tsx": $dashboard,
-    "./routes/greet/[name].tsx": $greet_name_,
     "./routes/index.tsx": $index,
+    "./routes/login.tsx": $login,
+    "./routes/logout.tsx": $logout,
+    "./routes/modules/index.tsx": $modules,
+    "./routes/modules/[name].tsx": $modules_name_,
+    "./routes/modules/[name]/review.tsx": $modules_name_review,
+    "./routes/modules/[name]/[submodule].tsx": $modules_name_submodule_,
     "./routes/new-user.tsx": $new_user,
   },
   islands: {
-    "./islands/Counter.tsx": $Counter,
+    "./islands/FillBlankQuestion.tsx": $FillBlankQuestion,
+    "./islands/FileUploadQuestion.tsx": $FileUploadQuestion,
+    "./islands/FreeFormQuestion.tsx": $FreeFormQuestion,
     "./islands/MobileMenu.tsx": $MobileMenu,
+    "./islands/ModuleQuestionnaire.tsx": $ModuleQuestionnaire,
+    "./islands/MultipleChoiceQuestion.tsx": $MultipleChoiceQuestion,
+    "./islands/QuestionRenderer.tsx": $QuestionRenderer,
+    "./islands/SubmoduleQuestionnaire.tsx": $SubmoduleQuestionnaire,
+    "./islands/TrueFalseQuestion.tsx": $TrueFalseQuestion,
   },
   baseUrl: import.meta.url,
 } satisfies Manifest;

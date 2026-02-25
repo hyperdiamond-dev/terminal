@@ -1,7 +1,7 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
+import { getAuthToken } from "../lib/cookies.ts";
 
-const API_BASE_URL =
-  Deno.env.get("API_BASE_URL") || "http://localhost:8000";
+const API_BASE_URL = Deno.env.get("API_BASE_URL") || "http://localhost:8000";
 
 interface User {
   id: string;
@@ -36,11 +36,7 @@ interface DashboardData {
 
 export const handler: Handlers<DashboardData> = {
   async GET(req, ctx) {
-    const cookies = req.headers.get("cookie");
-    const authToken = cookies
-      ?.split(";")
-      .find((c) => c.trim().startsWith("auth_token="))
-      ?.split("=")[1];
+    const authToken = getAuthToken(req);
 
     if (!authToken) {
       return new Response(null, {
@@ -134,7 +130,9 @@ export const handler: Handlers<DashboardData> = {
         consentStatus,
       });
     } catch (error) {
-      return ctx.render({ error: error.message });
+      return ctx.render({
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
     }
   },
 };
@@ -184,8 +182,8 @@ export default function Dashboard({ data }: PageProps<DashboardData>) {
   }
 
   const { user, progress, currentModule } = data;
-  const isAllComplete =
-    progress && progress.completed_modules >= progress.total_modules;
+  const isAllComplete = progress &&
+    progress.completed_modules >= progress.total_modules;
 
   return (
     <div class="container mx-auto py-8 px-4">
@@ -221,7 +219,8 @@ export default function Dashboard({ data }: PageProps<DashboardData>) {
             <div class="mb-4">
               <div class="flex justify-between text-sm mb-2">
                 <span class="text-vhs-white-dim">
-                  {progress.completed_modules} / {progress.total_modules} MODULES
+                  {progress.completed_modules} / {progress.total_modules}{" "}
+                  MODULES
                 </span>
                 <span class="text-analog-purple">
                   {progress.completion_percentage.toFixed(0)}%
@@ -230,24 +229,29 @@ export default function Dashboard({ data }: PageProps<DashboardData>) {
               <ProgressBar percentage={progress.completion_percentage} />
             </div>
 
-            {isAllComplete ? (
-              <div class="text-center py-4">
-                <p class="text-analog-blue text-lg font-bold mb-2">
-                  &gt; ALL MODULES COMPLETED
-                </p>
-                <p class="text-vhs-gray text-sm">
-                  THANK YOU FOR YOUR PARTICIPATION
-                </p>
-              </div>
-            ) : currentModule ? (
-              <div class="mt-4">
-                <p class="text-vhs-gray text-sm mb-2">&gt; CURRENT MODULE:</p>
-                <p class="text-vhs-white text-lg font-bold">
-                  [{String(currentModule.sequence_order).padStart(2, "0")}]{" "}
-                  {currentModule.title}
-                </p>
-              </div>
-            ) : null}
+            {isAllComplete
+              ? (
+                <div class="text-center py-4">
+                  <p class="text-analog-blue text-lg font-bold mb-2">
+                    &gt; ALL MODULES COMPLETED
+                  </p>
+                  <p class="text-vhs-gray text-sm">
+                    THANK YOU FOR YOUR PARTICIPATION
+                  </p>
+                </div>
+              )
+              : currentModule
+              ? (
+                <div class="mt-4">
+                  <p class="text-vhs-gray text-sm mb-2">&gt; CURRENT MODULE:</p>
+                  <p class="text-vhs-white text-lg font-bold">
+                    [{String(currentModule.sequence_order).padStart(2, "0")}]
+                    {" "}
+                    {currentModule.title}
+                  </p>
+                </div>
+              )
+              : null}
           </div>
         )}
 
@@ -282,13 +286,13 @@ export default function Dashboard({ data }: PageProps<DashboardData>) {
         {/* Status Footer */}
         <div class="my-8 text-sm text-vhs-gray space-y-1 font-medium text-center">
           <p>&gt; SESSION ESTABLISHED</p>
-          {isAllComplete ? (
-            <p class="text-analog-blue">&gt; STUDY COMPLETE</p>
-          ) : (
-            <p class="text-analog-purple text-shadow-vhs-purple">
-              &gt; SYSTEM READY
-            </p>
-          )}
+          {isAllComplete
+            ? <p class="text-analog-blue">&gt; STUDY COMPLETE</p>
+            : (
+              <p class="text-analog-purple text-shadow-vhs-purple">
+                &gt; SYSTEM READY
+              </p>
+            )}
         </div>
       </div>
     </div>

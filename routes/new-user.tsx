@@ -22,7 +22,9 @@ export const handler: Handlers<NewUserData> = {
       });
     } catch (error) {
       // If API call fails, render error page
-      return ctx.render({ error: error.message });
+      return ctx.render({
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
     }
   },
 
@@ -47,7 +49,7 @@ export const handler: Handlers<NewUserData> = {
         maxAge: 60 * 60 * 24 * 7, // 7 days
         sameSite: "Lax",
         path: "/",
-        secure: false, // Set to true in production with HTTPS
+        secure: Deno.env.get("DENO_ENV") === "production",
       });
 
       return new Response(null, {
@@ -59,7 +61,10 @@ export const handler: Handlers<NewUserData> = {
       return new Response(null, {
         status: 303,
         headers: {
-          Location: "/new-user?error=" + encodeURIComponent(error.message),
+          Location: "/new-user?error=" +
+            encodeURIComponent(
+              error instanceof Error ? error.message : "Unknown error",
+            ),
         },
       });
     }

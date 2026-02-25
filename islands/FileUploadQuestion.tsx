@@ -1,4 +1,4 @@
-import { useSignal, useComputed, useSignalEffect } from "@preact/signals";
+import { useComputed, useSignal, useSignalEffect } from "@preact/signals";
 import type { FileUploadMeta, Question } from "../lib/api.ts";
 
 interface FileUploadQuestionProps {
@@ -7,9 +7,8 @@ interface FileUploadQuestionProps {
   value?: string;
   disabled?: boolean;
   authToken: string;
+  apiBaseUrl: string;
 }
-
-const API_BASE_URL = "http://localhost:8000";
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -29,9 +28,10 @@ function getMimeIcon(mimeType: string): string {
 export default function FileUploadQuestion({
   question,
   onAnswer,
-  value,
+  value: _value,
   disabled = false,
   authToken,
+  apiBaseUrl,
 }: FileUploadQuestionProps) {
   const metadata = question.metadata as {
     max_files?: number;
@@ -64,7 +64,7 @@ export default function FileUploadQuestion({
     const loadExisting = async () => {
       try {
         const response = await fetch(
-          `${API_BASE_URL}/api/upload/question/${question.id}`,
+          `${apiBaseUrl}/api/upload/question/${question.id}`,
           {
             headers: { Authorization: `Bearer ${authToken}` },
           },
@@ -107,7 +107,9 @@ export default function FileUploadQuestion({
 
   const uploadFile = async (file: File) => {
     if (!canUploadMore.value) {
-      error.value = `MAXIMUM ${maxFiles} FILE${maxFiles > 1 ? "S" : ""} ALLOWED`;
+      error.value = `MAXIMUM ${maxFiles} FILE${
+        maxFiles > 1 ? "S" : ""
+      } ALLOWED`;
       return;
     }
 
@@ -128,7 +130,7 @@ export default function FileUploadQuestion({
       // Use XMLHttpRequest for progress tracking
       const result = await new Promise<FileUploadMeta>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.open("POST", `${API_BASE_URL}/api/upload/question/${question.id}`);
+        xhr.open("POST", `${apiBaseUrl}/api/upload/question/${question.id}`);
         xhr.setRequestHeader("Authorization", `Bearer ${authToken}`);
 
         xhr.upload.addEventListener("progress", (e) => {
@@ -169,7 +171,7 @@ export default function FileUploadQuestion({
   const deleteFile = async (fileId: number) => {
     error.value = null;
     try {
-      const response = await fetch(`${API_BASE_URL}/api/upload/${fileId}`, {
+      const response = await fetch(`${apiBaseUrl}/api/upload/${fileId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${authToken}` },
       });
@@ -227,9 +229,7 @@ export default function FileUploadQuestion({
       <div class="mb-4">
         <p class="text-lg text-vhs-white font-medium">
           <span class="text-analog-purple">&gt;</span> {question.question_text}
-          {question.is_required && (
-            <span class="text-analog-red ml-2">*</span>
-          )}
+          {question.is_required && <span class="text-analog-red ml-2">*</span>}
         </p>
         {metadata.prompt && (
           <p class="text-vhs-gray text-sm mt-1">
@@ -331,6 +331,7 @@ export default function FileUploadQuestion({
               </div>
               {!disabled && (
                 <button
+                  type="button"
                   onClick={() => deleteFile(upload.id)}
                   class="text-analog-red text-xs font-bold uppercase hover:text-analog-red/80 transition-colors shrink-0 ml-4"
                 >

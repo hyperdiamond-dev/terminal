@@ -13,6 +13,7 @@ interface QuestionRendererProps {
   value?: ResponseValue;
   disabled?: boolean;
   authToken?: string;
+  apiBaseUrl?: string;
 }
 
 export default function QuestionRenderer({
@@ -21,6 +22,7 @@ export default function QuestionRenderer({
   value,
   disabled = false,
   authToken,
+  apiBaseUrl,
 }: QuestionRendererProps) {
   const handleAnswer = (val: ResponseValue) => {
     onAnswer(question.id, val);
@@ -75,6 +77,7 @@ export default function QuestionRenderer({
           value={value as string | undefined}
           disabled={disabled}
           authToken={authToken || ""}
+          apiBaseUrl={apiBaseUrl || ""}
         />
       );
 

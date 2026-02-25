@@ -1,5 +1,6 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
 import { api } from "../../lib/api.ts";
+import { getAuthToken } from "../../lib/cookies.ts";
 
 interface ModuleOverview {
   name: string;
@@ -28,11 +29,7 @@ interface ModulesData {
 
 export const handler: Handlers<ModulesData> = {
   async GET(req, ctx) {
-    const cookies = req.headers.get("cookie");
-    const authToken = cookies
-      ?.split(";")
-      .find((c) => c.trim().startsWith("auth_token="))
-      ?.split("=")[1];
+    const authToken = getAuthToken(req);
 
     if (!authToken) {
       return new Response(null, {
@@ -46,7 +43,9 @@ export const handler: Handlers<ModulesData> = {
 
       // Fetch module overview from API
       const response = await fetch(
-        `${Deno.env.get("API_BASE_URL") || "http://localhost:8000"}/api/modules`,
+        `${
+          Deno.env.get("API_BASE_URL") || "http://localhost:8000"
+        }/api/modules`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`,
@@ -72,7 +71,9 @@ export const handler: Handlers<ModulesData> = {
         progress: data.progress,
       });
     } catch (error) {
-      return ctx.render({ error: error.message });
+      return ctx.render({
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
     }
   },
 };

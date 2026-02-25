@@ -4,7 +4,7 @@ import tailwind from "$fresh/plugins/tailwind.ts";
 export default defineConfig({
   plugins: [
     tailwind({
-      // Point to your Tailwind config
+      // @ts-ignore Fresh tailwind plugin accepts config path at runtime
       config: "./tailwind.config.ts",
     }),
   ],

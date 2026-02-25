@@ -1,6 +1,7 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
 import SubmoduleQuestionnaire from "../../../islands/SubmoduleQuestionnaire.tsx";
 import MediaContent from "../../../components/MediaContent.tsx";
+import { getAuthToken } from "../../../lib/cookies.ts";
 
 interface SubmoduleProgress {
   status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
@@ -53,18 +54,14 @@ interface SubmoduleData {
   content?: ContentItem[];
   error?: string;
   authToken?: string;
+  apiBaseUrl?: string;
 }
 
-const API_BASE_URL =
-  Deno.env.get("API_BASE_URL") || "http://localhost:8000";
+const API_BASE_URL = Deno.env.get("API_BASE_URL") || "http://localhost:8000";
 
 export const handler: Handlers<SubmoduleData> = {
   async GET(req, ctx) {
-    const cookies = req.headers.get("cookie");
-    const authToken = cookies
-      ?.split(";")
-      .find((c) => c.trim().startsWith("auth_token="))
-      ?.split("=")[1];
+    const authToken = getAuthToken(req);
 
     if (!authToken) {
       return new Response(null, {
@@ -153,9 +150,12 @@ export const handler: Handlers<SubmoduleData> = {
         questions,
         content,
         authToken,
+        apiBaseUrl: API_BASE_URL,
       });
     } catch (error) {
-      return ctx.render({ error: error.message });
+      return ctx.render({
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
     }
   },
 };
@@ -201,6 +201,7 @@ export default function SubmodulePage({ data }: PageProps<SubmoduleData>) {
     questions = [],
     content = [],
     authToken,
+    apiBaseUrl,
   } = data;
 
   return (
@@ -232,19 +233,23 @@ export default function SubmodulePage({ data }: PageProps<SubmoduleData>) {
 
           {/* Status indicator */}
           <div class="mt-6">
-            {is_completed ? (
-              <span class="inline-block px-4 py-2 border-2 border-analog-blue bg-analog-blue/20 text-analog-blue font-bold uppercase text-sm">
-                COMPLETED
-              </span>
-            ) : progress?.status === "IN_PROGRESS" ? (
-              <span class="inline-block px-4 py-2 border-2 border-analog-purple bg-analog-purple/20 text-analog-purple font-bold uppercase text-sm">
-                IN PROGRESS
-              </span>
-            ) : (
-              <span class="inline-block px-4 py-2 border-2 border-vhs-gray bg-vhs-gray-dark/50 text-vhs-gray font-bold uppercase text-sm">
-                NOT STARTED
-              </span>
-            )}
+            {is_completed
+              ? (
+                <span class="inline-block px-4 py-2 border-2 border-analog-blue bg-analog-blue/20 text-analog-blue font-bold uppercase text-sm">
+                  COMPLETED
+                </span>
+              )
+              : progress?.status === "IN_PROGRESS"
+              ? (
+                <span class="inline-block px-4 py-2 border-2 border-analog-purple bg-analog-purple/20 text-analog-purple font-bold uppercase text-sm">
+                  IN PROGRESS
+                </span>
+              )
+              : (
+                <span class="inline-block px-4 py-2 border-2 border-vhs-gray bg-vhs-gray-dark/50 text-vhs-gray font-bold uppercase text-sm">
+                  NOT STARTED
+                </span>
+              )}
           </div>
         </div>
 
@@ -256,21 +261,24 @@ export default function SubmodulePage({ data }: PageProps<SubmoduleData>) {
         )}
 
         {/* Questionnaire */}
-        {questions.length > 0 ? (
-          <SubmoduleQuestionnaire
-            moduleName={module?.name || ""}
-            submoduleName={submodule?.name || ""}
-            questions={questions}
-            isCompleted={is_completed || false}
-            authToken={authToken || ""}
-          />
-        ) : (
-          <div class="text-center my-16">
-            <p class="text-vhs-white-dim text-lg">
-              &gt; NO QUESTIONS IN THIS SECTION
-            </p>
-          </div>
-        )}
+        {questions.length > 0
+          ? (
+            <SubmoduleQuestionnaire
+              moduleName={module?.name || ""}
+              submoduleName={submodule?.name || ""}
+              questions={questions}
+              isCompleted={is_completed || false}
+              authToken={authToken || ""}
+              apiBaseUrl={apiBaseUrl || ""}
+            />
+          )
+          : (
+            <div class="text-center my-16">
+              <p class="text-vhs-white-dim text-lg">
+                &gt; NO QUESTIONS IN THIS SECTION
+              </p>
+            </div>
+          )}
 
         {/* Navigation */}
         <div class="my-8 text-center">

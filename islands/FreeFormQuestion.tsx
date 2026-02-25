@@ -1,4 +1,4 @@
-import { useSignal, useComputed } from "@preact/signals";
+import { useComputed, useSignal } from "@preact/signals";
 import type { Question } from "../lib/api.ts";
 
 interface FreeFormQuestionProps {
@@ -82,9 +82,7 @@ export default function FreeFormQuestion({
       <div class="mb-4">
         <p class="text-lg text-vhs-white font-medium">
           <span class="text-analog-purple">&gt;</span> {question.question_text}
-          {question.is_required && (
-            <span class="text-analog-red ml-2">*</span>
-          )}
+          {question.is_required && <span class="text-analog-red ml-2">*</span>}
         </p>
       </div>
 
@@ -129,20 +127,19 @@ export default function FreeFormQuestion({
 
         <div class="text-sm text-vhs-gray font-mono space-x-4">
           <span
-            class={
-              metadata.max_words && wordCount.value > metadata.max_words
-                ? "text-analog-red"
-                : ""
-            }
+            class={metadata.max_words && wordCount.value > metadata.max_words
+              ? "text-analog-red"
+              : ""}
           >
-            {wordCount.value} {metadata.max_words && `/ ${metadata.max_words}`}{" "}
+            {wordCount.value} {metadata.max_words && `/ ${metadata.max_words}`}
+            {" "}
             WORDS
           </span>
           {metadata.max_length && (
             <span
-              class={
-                charCount.value > metadata.max_length ? "text-analog-red" : ""
-              }
+              class={charCount.value > metadata.max_length
+                ? "text-analog-red"
+                : ""}
             >
               {charCount.value} / {metadata.max_length} CHARS
             </span>

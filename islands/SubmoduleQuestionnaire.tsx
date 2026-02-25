@@ -1,4 +1,4 @@
-import { useSignal, useComputed } from "@preact/signals";
+import { useComputed, useSignal } from "@preact/signals";
 import type { Question } from "../lib/api.ts";
 import QuestionRenderer from "./QuestionRenderer.tsx";
 
@@ -15,11 +15,10 @@ interface SubmoduleQuestionnaireProps {
   questions: QuestionWithResponse[];
   isCompleted: boolean;
   authToken: string;
+  apiBaseUrl: string;
 }
 
 type ResponseValue = string | string[] | boolean;
-
-const API_BASE_URL = "http://localhost:8000";
 
 export default function SubmoduleQuestionnaire({
   moduleName,
@@ -27,8 +26,9 @@ export default function SubmoduleQuestionnaire({
   questions,
   isCompleted,
   authToken,
+  apiBaseUrl,
 }: SubmoduleQuestionnaireProps) {
-  const responses = useSignal<Record<number, ResponseValue>>(() => {
+  const responses = useSignal<Record<number, ResponseValue>>((() => {
     // Initialize with existing responses
     const initial: Record<number, ResponseValue> = {};
     for (const q of questions) {
@@ -37,7 +37,7 @@ export default function SubmoduleQuestionnaire({
       }
     }
     return initial;
-  });
+  })());
 
   const isStarted = useSignal(questions.some((q) => q.user_response !== null));
   const isSubmitting = useSignal(false);
@@ -79,7 +79,7 @@ export default function SubmoduleQuestionnaire({
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/modules/${moduleName}/submodules/${submoduleName}/start`,
+        `${apiBaseUrl}/api/modules/${moduleName}/submodules/${submoduleName}/start`,
         {
           method: "POST",
           headers: {
@@ -98,7 +98,9 @@ export default function SubmoduleQuestionnaire({
       success.value = "SECTION STARTED SUCCESSFULLY";
       setTimeout(() => (success.value = null), 3000);
     } catch (err) {
-      error.value = err instanceof Error ? err.message : "Failed to start section";
+      error.value = err instanceof Error
+        ? err.message
+        : "Failed to start section";
     } finally {
       isSubmitting.value = false;
     }
@@ -110,7 +112,7 @@ export default function SubmoduleQuestionnaire({
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/modules/${moduleName}/submodules/${submoduleName}/save`,
+        `${apiBaseUrl}/api/modules/${moduleName}/submodules/${submoduleName}/save`,
         {
           method: "POST",
           headers: {
@@ -129,7 +131,9 @@ export default function SubmoduleQuestionnaire({
       success.value = "PROGRESS SAVED";
       setTimeout(() => (success.value = null), 3000);
     } catch (err) {
-      error.value = err instanceof Error ? err.message : "Failed to save progress";
+      error.value = err instanceof Error
+        ? err.message
+        : "Failed to save progress";
     } finally {
       isSubmitting.value = false;
     }
@@ -143,7 +147,7 @@ export default function SubmoduleQuestionnaire({
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/modules/${moduleName}/submodules/${submoduleName}/complete`,
+        `${apiBaseUrl}/api/modules/${moduleName}/submodules/${submoduleName}/complete`,
         {
           method: "POST",
           headers: {
@@ -172,7 +176,9 @@ export default function SubmoduleQuestionnaire({
 
       showCompletion.value = true;
     } catch (err) {
-      error.value = err instanceof Error ? err.message : "Failed to complete section";
+      error.value = err instanceof Error
+        ? err.message
+        : "Failed to complete section";
     } finally {
       isSubmitting.value = false;
     }
@@ -195,28 +201,32 @@ export default function SubmoduleQuestionnaire({
         </div>
 
         <div class="my-8 space-y-4">
-          {moduleCompleted.value ? (
-            <a
-              href="/modules"
-              class="inline-block border-2 border-analog-purple px-8 py-4 text-analog-purple font-bold uppercase text-lg transition-colors shadow-vhs-glow-purple text-shadow-void-text bg-decay-smoke/30 hover:bg-decay-smoke/50"
-            >
-              &gt; MODULE COMPLETE - CONTINUE
-            </a>
-          ) : nextSubmodule.value ? (
-            <a
-              href={`/modules/${moduleName}/${nextSubmodule.value}`}
-              class="inline-block border-2 border-analog-purple px-8 py-4 text-analog-purple font-bold uppercase text-lg transition-colors shadow-vhs-glow-purple text-shadow-void-text bg-decay-smoke/30 hover:bg-decay-smoke/50"
-            >
-              &gt; CONTINUE TO NEXT SECTION
-            </a>
-          ) : (
-            <a
-              href={`/modules/${moduleName}`}
-              class="inline-block border-2 border-analog-blue px-8 py-4 text-analog-blue font-bold uppercase text-lg transition-colors shadow-vhs-glow-blue text-shadow-void-text bg-decay-smoke/30 hover:bg-decay-smoke/50"
-            >
-              &gt; RETURN TO MODULE
-            </a>
-          )}
+          {moduleCompleted.value
+            ? (
+              <a
+                href="/modules"
+                class="inline-block border-2 border-analog-purple px-8 py-4 text-analog-purple font-bold uppercase text-lg transition-colors shadow-vhs-glow-purple text-shadow-void-text bg-decay-smoke/30 hover:bg-decay-smoke/50"
+              >
+                &gt; MODULE COMPLETE - CONTINUE
+              </a>
+            )
+            : nextSubmodule.value
+            ? (
+              <a
+                href={`/modules/${moduleName}/${nextSubmodule.value}`}
+                class="inline-block border-2 border-analog-purple px-8 py-4 text-analog-purple font-bold uppercase text-lg transition-colors shadow-vhs-glow-purple text-shadow-void-text bg-decay-smoke/30 hover:bg-decay-smoke/50"
+              >
+                &gt; CONTINUE TO NEXT SECTION
+              </a>
+            )
+            : (
+              <a
+                href={`/modules/${moduleName}`}
+                class="inline-block border-2 border-analog-blue px-8 py-4 text-analog-blue font-bold uppercase text-lg transition-colors shadow-vhs-glow-blue text-shadow-void-text bg-decay-smoke/30 hover:bg-decay-smoke/50"
+              >
+                &gt; RETURN TO MODULE
+              </a>
+            )}
         </div>
       </div>
     );
@@ -247,8 +257,9 @@ export default function SubmoduleQuestionnaire({
                   question={question}
                   onAnswer={() => {}}
                   value={responses.value[question.id]}
-                  disabled={true}
+                  disabled
                   authToken={authToken}
+                  apiBaseUrl={apiBaseUrl}
                 />
               </div>
             ))}
@@ -270,6 +281,7 @@ export default function SubmoduleQuestionnaire({
           </p>
 
           <button
+            type="button"
             onClick={startSubmodule}
             disabled={isSubmitting.value}
             class={`
@@ -361,6 +373,7 @@ export default function SubmoduleQuestionnaire({
       {/* Action buttons */}
       <div class="my-8 flex justify-center gap-4">
         <button
+          type="button"
           onClick={saveProgress}
           disabled={isSubmitting.value}
           class={`
@@ -376,6 +389,7 @@ export default function SubmoduleQuestionnaire({
         </button>
 
         <button
+          type="button"
           onClick={completeSubmodule}
           disabled={!canSubmit.value || isSubmitting.value}
           class={`

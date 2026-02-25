@@ -1,7 +1,7 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
+import { getAuthToken } from "../lib/cookies.ts";
 
-const API_BASE_URL =
-  Deno.env.get("API_BASE_URL") || "http://localhost:8000";
+const API_BASE_URL = Deno.env.get("API_BASE_URL") || "http://localhost:8000";
 
 interface ConsentVersion {
   version: string;
@@ -29,11 +29,7 @@ interface ConsentData {
 
 export const handler: Handlers<ConsentData> = {
   async GET(req, ctx) {
-    const cookies = req.headers.get("cookie");
-    const authToken = cookies
-      ?.split(";")
-      .find((c) => c.trim().startsWith("auth_token="))
-      ?.split("=")[1];
+    const authToken = getAuthToken(req);
 
     if (!authToken) {
       return new Response(null, {
@@ -83,16 +79,14 @@ export const handler: Handlers<ConsentData> = {
         consentStatus,
       });
     } catch (error) {
-      return ctx.render({ error: error.message });
+      return ctx.render({
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
     }
   },
 
   async POST(req, _ctx) {
-    const cookies = req.headers.get("cookie");
-    const authToken = cookies
-      ?.split(";")
-      .find((c) => c.trim().startsWith("auth_token="))
-      ?.split("=")[1];
+    const authToken = getAuthToken(req);
 
     if (!authToken) {
       return new Response(null, {
@@ -131,7 +125,10 @@ export const handler: Handlers<ConsentData> = {
       return new Response(null, {
         status: 303,
         headers: {
-          Location: "/consent?error=" + encodeURIComponent(error.message),
+          Location: "/consent?error=" +
+            encodeURIComponent(
+              error instanceof Error ? error.message : "Unknown error",
+            ),
         },
       });
     }
