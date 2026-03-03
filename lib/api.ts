@@ -275,18 +275,6 @@ class ApiClient {
     );
   }
 
-  // Consent endpoints (TODO: implement on backend)
-  // deno-lint-ignore require-await
-  async getConsentModule(): Promise<{ consent_text: string }> {
-    // TODO: Implement actual API call
-    throw new Error("Consent module API not yet implemented");
-  }
-
-  // deno-lint-ignore require-await
-  async submitConsent(): Promise<{ success: boolean }> {
-    // TODO: Implement actual API call
-    throw new Error("Consent submission API not yet implemented");
-  }
 }
 
 // Export a singleton instance
