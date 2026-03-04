@@ -16,6 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
 
+    env:
+      API_BASE_URL: http://localhost:8000
+
     steps:
       - name: Setup repo
         uses: actions/checkout@v4
