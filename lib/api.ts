@@ -274,7 +274,6 @@ class ApiClient {
       `/api/questions/${questionId}/response`,
     );
   }
-
 }
 
 // Export a singleton instance

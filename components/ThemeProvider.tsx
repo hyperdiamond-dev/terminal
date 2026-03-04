@@ -1,4 +1,4 @@
-import { getTheme, buildThemeStyle } from "../lib/themes.ts";
+import { buildThemeStyle, getTheme } from "../lib/themes.ts";
 
 interface ThemeProviderProps {
   styleTheme: string | null | undefined;
@@ -21,7 +21,10 @@ export default function ThemeProvider({ styleTheme }: ThemeProviderProps) {
       />
       <script
         dangerouslySetInnerHTML={{
-          __html: `(function(){var b=document.body;b.className="${theme.effects}${theme.bodyClass ? " " + theme.bodyClass : ""}";b.style.backgroundColor="var(--theme-bg)";b.style.color="var(--theme-text)";})();`,
+          __html:
+            `(function(){var b=document.body;b.className="${theme.effects}${
+              theme.bodyClass ? " " + theme.bodyClass : ""
+            }";b.style.backgroundColor="var(--theme-bg)";b.style.color="var(--theme-text)";})();`,
         }}
       />
     </>

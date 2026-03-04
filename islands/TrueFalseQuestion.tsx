@@ -33,7 +33,8 @@ export default function TrueFalseQuestion({
     <div class="my-6">
       <div class="mb-4">
         <p class="text-lg text-t-text font-medium">
-          <span class="text-t-accent-secondary">&gt;</span> {question.question_text}
+          <span class="text-t-accent-secondary">&gt;</span>
+          {question.question_text}
           {question.is_required && <span class="text-t-accent ml-2">*</span>}
         </p>
       </div>
