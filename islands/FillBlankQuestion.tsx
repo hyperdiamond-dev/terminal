@@ -76,9 +76,9 @@ export default function FillBlankQuestion({
   return (
     <div class="my-6">
       <div class="mb-4">
-        <p class="text-lg text-vhs-white font-medium">
-          <span class="text-analog-cyan">&gt;</span> {question.question_text}
-          {question.is_required && <span class="text-analog-red ml-2">*</span>}
+        <p class="text-lg text-t-text font-medium">
+          <span class="text-t-accent-secondary">&gt;</span> {question.question_text}
+          {question.is_required && <span class="text-t-accent ml-2">*</span>}
         </p>
       </div>
 
@@ -92,35 +92,35 @@ export default function FillBlankQuestion({
           onFocus={() => (isFocused.value = true)}
           onBlur={handleBlur}
           class={`
-            w-full px-4 py-3 border-2 bg-decay-smoke/30 font-mono text-lg
-            placeholder:text-vhs-gray-dark placeholder:uppercase
+            w-full px-4 py-3 border-2 bg-t-surface font-mono text-lg
+            placeholder:text-t-border placeholder:uppercase
             focus:outline-none transition-all duration-200
             ${disabled ? "opacity-50 cursor-not-allowed" : ""}
             ${
             error.value
-              ? "border-analog-red text-analog-red"
+              ? "border-t-accent text-t-accent"
               : isFocused.value
-              ? "border-analog-cyan text-vhs-white shadow-vhs-glow-blue"
-              : "border-vhs-gray-dark text-vhs-white-dim hover:border-vhs-gray"
+              ? "border-t-accent-secondary text-t-text shadow-t-glow"
+              : "border-t-border text-t-text-dim hover:border-t-text-muted"
           }
           `}
         />
 
         {metadata.max_length && (
-          <div class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-vhs-gray font-mono">
+          <div class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-t-text-muted font-mono">
             {inputValue.value.length}/{metadata.max_length}
           </div>
         )}
       </div>
 
       {error.value && (
-        <p class="mt-2 text-sm text-analog-red text-shadow-vhs-red">
+        <p class="mt-2 text-sm text-t-accent text-shadow-t-accent">
           &gt; ERROR: {error.value}
         </p>
       )}
 
       {metadata.min_length && !error.value && (
-        <p class="mt-2 text-sm text-vhs-gray">
+        <p class="mt-2 text-sm text-t-text-muted">
           &gt; MINIMUM {metadata.min_length} CHARACTERS
         </p>
       )}

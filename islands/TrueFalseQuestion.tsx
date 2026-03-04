@@ -32,9 +32,9 @@ export default function TrueFalseQuestion({
   return (
     <div class="my-6">
       <div class="mb-4">
-        <p class="text-lg text-vhs-white font-medium">
-          <span class="text-analog-blue">&gt;</span> {question.question_text}
-          {question.is_required && <span class="text-analog-red ml-2">*</span>}
+        <p class="text-lg text-t-text font-medium">
+          <span class="text-t-accent-secondary">&gt;</span> {question.question_text}
+          {question.is_required && <span class="text-t-accent ml-2">*</span>}
         </p>
       </div>
 
@@ -48,8 +48,8 @@ export default function TrueFalseQuestion({
             ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
             ${
             selected.value === true
-              ? "border-analog-blue bg-analog-blue/20 text-analog-blue shadow-vhs-glow-blue text-shadow-vhs-blue"
-              : "border-vhs-gray-dark bg-decay-smoke/30 text-vhs-white-dim hover:border-vhs-gray hover:bg-decay-smoke/50"
+              ? "border-t-accent-secondary bg-t-accent-secondary/20 text-t-accent-secondary shadow-t-glow text-shadow-t-accent"
+              : "border-t-border bg-t-surface text-t-text-dim hover:border-t-text-muted hover:bg-t-surface-light"
           }
           `}
         >
@@ -59,8 +59,8 @@ export default function TrueFalseQuestion({
               w-4 h-4 rounded-full border-2 flex-shrink-0
               ${
                 selected.value === true
-                  ? "border-analog-blue bg-analog-blue"
-                  : "border-vhs-gray"
+                  ? "border-t-accent-secondary bg-t-accent-secondary"
+                  : "border-t-text-muted"
               }
             `}
             />
@@ -77,8 +77,8 @@ export default function TrueFalseQuestion({
             ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
             ${
             selected.value === false
-              ? "border-analog-red bg-analog-red/20 text-analog-red shadow-vhs-glow text-shadow-vhs-red"
-              : "border-vhs-gray-dark bg-decay-smoke/30 text-vhs-white-dim hover:border-vhs-gray hover:bg-decay-smoke/50"
+              ? "border-t-accent bg-t-accent/20 text-t-accent shadow-t-glow text-shadow-t-accent"
+              : "border-t-border bg-t-surface text-t-text-dim hover:border-t-text-muted hover:bg-t-surface-light"
           }
           `}
         >
@@ -88,8 +88,8 @@ export default function TrueFalseQuestion({
               w-4 h-4 rounded-full border-2 flex-shrink-0
               ${
                 selected.value === false
-                  ? "border-analog-red bg-analog-red"
-                  : "border-vhs-gray"
+                  ? "border-t-accent bg-t-accent"
+                  : "border-t-text-muted"
               }
             `}
             />

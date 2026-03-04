@@ -59,12 +59,12 @@ export default function MultipleChoiceQuestion({
   return (
     <div class="my-6">
       <div class="mb-4">
-        <p class="text-lg text-vhs-white font-medium">
-          <span class="text-analog-purple">&gt;</span> {question.question_text}
-          {question.is_required && <span class="text-analog-red ml-2">*</span>}
+        <p class="text-lg text-t-text font-medium">
+          <span class="text-t-accent">&gt;</span> {question.question_text}
+          {question.is_required && <span class="text-t-accent ml-2">*</span>}
         </p>
         {allowMultiple && (
-          <p class="text-sm text-vhs-gray mt-1">
+          <p class="text-sm text-t-text-muted mt-1">
             &gt; SELECT ALL THAT APPLY
           </p>
         )}
@@ -82,8 +82,8 @@ export default function MultipleChoiceQuestion({
               ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
               ${
               isSelected(choice.value)
-                ? "border-analog-purple bg-analog-purple/20 text-vhs-white shadow-vhs-glow-purple"
-                : "border-vhs-gray-dark bg-decay-smoke/30 text-vhs-white-dim hover:border-vhs-gray hover:bg-decay-smoke/50"
+                ? "border-t-accent bg-t-accent/20 text-t-text shadow-t-glow"
+                : "border-t-border bg-t-surface text-t-text-dim hover:border-t-text-muted hover:bg-t-surface-light"
             }
             `}
           >
@@ -94,13 +94,13 @@ export default function MultipleChoiceQuestion({
                 ${allowMultiple ? "" : "rounded-full"}
                 ${
                   isSelected(choice.value)
-                    ? "border-analog-purple bg-analog-purple"
-                    : "border-vhs-gray"
+                    ? "border-t-accent bg-t-accent"
+                    : "border-t-text-muted"
                 }
               `}
               >
                 {isSelected(choice.value) && (
-                  <span class="text-vhs-white text-xs font-bold">
+                  <span class="text-t-text text-xs font-bold">
                     {allowMultiple ? "X" : "O"}
                   </span>
                 )}

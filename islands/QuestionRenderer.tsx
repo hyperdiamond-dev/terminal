@@ -83,11 +83,11 @@ export default function QuestionRenderer({
 
     default:
       return (
-        <div class="my-6 px-4 py-3 border-2 border-analog-red bg-analog-red/10">
-          <p class="text-analog-red text-shadow-vhs-red">
+        <div class="my-6 px-4 py-3 border-2 border-t-accent bg-t-accent/10">
+          <p class="text-t-accent text-shadow-t-accent">
             &gt; ERROR: UNKNOWN QUESTION TYPE "{question.question_type}"
           </p>
-          <p class="text-vhs-gray mt-2 text-sm">
+          <p class="text-t-text-muted mt-2 text-sm">
             &gt; QUESTION ID: {question.id}
           </p>
         </div>

@@ -1,6 +1,7 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
 import ModuleQuestionnaire from "../../islands/ModuleQuestionnaire.tsx";
 import MediaContent from "../../components/MediaContent.tsx";
+import ThemeProvider from "../../components/ThemeProvider.tsx";
 import { getAuthToken } from "../../lib/cookies.ts";
 
 interface ModuleProgress {
@@ -58,6 +59,7 @@ interface ModuleData {
     title: string;
     description: string | null;
     sequence_order: number;
+    style_theme?: string | null;
   };
   progress?: ModuleProgress;
   accessible?: boolean;
@@ -196,19 +198,19 @@ function SubmoduleCard(
 ) {
   const statusConfig = {
     NOT_STARTED: {
-      bg: "bg-vhs-gray-dark/50",
-      text: "text-vhs-gray",
-      border: "border-vhs-gray-dark",
+      bg: "bg-t-text-muted/10",
+      text: "text-t-text-muted",
+      border: "border-t-text-muted",
     },
     IN_PROGRESS: {
-      bg: "bg-analog-purple/20",
-      text: "text-analog-purple",
-      border: "border-analog-purple",
+      bg: "bg-t-accent/20",
+      text: "text-t-accent",
+      border: "border-t-accent",
     },
     COMPLETED: {
-      bg: "bg-analog-blue/20",
-      text: "text-analog-blue",
-      border: "border-analog-blue",
+      bg: "bg-t-accent-secondary/20",
+      text: "text-t-accent-secondary",
+      border: "border-t-accent-secondary",
     },
   };
 
@@ -222,30 +224,30 @@ function SubmoduleCard(
         ${
         submodule.accessible
           ? status === "COMPLETED"
-            ? "border-analog-blue/50 bg-decay-smoke/20 hover:bg-decay-smoke/40"
-            : "border-analog-purple bg-decay-smoke/30 hover:bg-decay-smoke/50"
-          : "border-vhs-gray-dark bg-decay-ash/30 opacity-60"
+            ? "border-t-accent-secondary/50 bg-t-surface hover:bg-t-surface-light"
+            : "border-t-accent bg-t-surface hover:bg-t-surface-light"
+          : "border-t-border bg-t-surface opacity-60"
       }
       `}
     >
       <div class="flex items-start justify-between gap-4">
         <div class="flex-1">
           <div class="flex items-center gap-2 mb-1">
-            <span class="text-vhs-gray text-xs font-mono">
+            <span class="text-t-text-muted text-xs font-mono">
               [{String(submodule.sequence_order).padStart(2, "0")}]
             </span>
-            <h3 class="text-lg font-bold text-vhs-white uppercase">
+            <h3 class="text-lg font-bold text-t-text uppercase">
               {submodule.title}
             </h3>
           </div>
 
           {submodule.description && (
-            <p class="text-vhs-white-dim text-sm mt-1">
+            <p class="text-t-text-dim text-sm mt-1">
               {submodule.description}
             </p>
           )}
 
-          <p class="text-vhs-gray text-xs mt-2">
+          <p class="text-t-text-muted text-xs mt-2">
             {submodule.questions_count} QUESTIONS
           </p>
         </div>
@@ -264,7 +266,7 @@ function SubmoduleCard(
               </a>
             )
             : (
-              <span class="inline-block px-4 py-2 border-2 border-vhs-gray-dark text-vhs-gray font-bold uppercase text-sm cursor-not-allowed">
+              <span class="inline-block px-4 py-2 border-2 border-t-border text-t-text-muted font-bold uppercase text-sm cursor-not-allowed">
                 LOCKED
               </span>
             )}
@@ -280,15 +282,15 @@ export default function ModulePage({ data }: PageProps<ModuleData>) {
       <div class="container mx-auto py-8 px-4">
         <div class="max-w-screen-md mx-auto flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
           <div class="text-center">
-            <h1 class="text-4xl font-bold text-vhs-white text-shadow-vhs-red my-6 uppercase">
+            <h1 class="text-4xl font-bold text-t-text text-shadow-t-accent my-6 uppercase">
               ERROR
             </h1>
 
             <div class="my-8 px-4 space-y-4">
-              <p class="text-lg text-vhs-white-dim">
+              <p class="text-lg text-t-text-dim">
                 &gt; FAILED TO LOAD MODULE
               </p>
-              <p class="text-lg text-analog-red text-shadow-vhs-red">
+              <p class="text-lg text-t-accent text-shadow-t-accent">
                 &gt; {data.error}
               </p>
             </div>
@@ -296,7 +298,7 @@ export default function ModulePage({ data }: PageProps<ModuleData>) {
             <div class="my-8">
               <a
                 href="/modules"
-                class="inline-block border-2 border-analog-blue px-8 py-4 text-analog-blue font-bold uppercase text-lg transition-colors shadow-vhs-glow-blue text-shadow-void-text bg-decay-smoke/30 hover:bg-decay-smoke/50"
+                class="inline-block border-2 border-t-accent-secondary px-8 py-4 text-t-accent-secondary font-bold uppercase text-lg transition-colors shadow-t-glow bg-t-surface hover:bg-t-surface-light"
               >
                 &gt; RETURN TO MODULES
               </a>
@@ -324,103 +326,106 @@ export default function ModulePage({ data }: PageProps<ModuleData>) {
   const hasContent = content.length > 0;
 
   return (
-    <div class="container mx-auto py-8 px-4">
-      <div class="max-w-screen-md mx-auto">
-        {/* Module Header */}
-        <div class="text-center my-8">
-          <p class="text-vhs-gray text-sm mb-2">
-            MODULE {String(module?.sequence_order || 0).padStart(2, "0")}
-          </p>
-          <h1 class="text-4xl font-bold text-vhs-white text-shadow-vhs-purple my-4 uppercase tracking-wider">
-            {module?.title}
-          </h1>
-          {module?.description && (
-            <p class="text-vhs-white-dim text-base max-w-lg mx-auto">
-              {module.description}
+    <>
+      <ThemeProvider styleTheme={module?.style_theme} />
+      <div class="container mx-auto py-8 px-4">
+        <div class="max-w-screen-md mx-auto">
+          {/* Module Header */}
+          <div class="text-center my-8">
+            <p class="text-t-text-muted text-sm mb-2">
+              MODULE {String(module?.sequence_order || 0).padStart(2, "0")}
             </p>
-          )}
+            <h1 class="text-4xl font-bold text-t-text text-shadow-t-accent my-4 uppercase tracking-wider">
+              {module?.title}
+            </h1>
+            {module?.description && (
+              <p class="text-t-text-dim text-base max-w-lg mx-auto">
+                {module.description}
+              </p>
+            )}
 
-          {/* Status indicator */}
-          <div class="mt-6">
-            {is_completed
-              ? (
-                <span class="inline-block px-4 py-2 border-2 border-analog-blue bg-analog-blue/20 text-analog-blue font-bold uppercase text-sm">
-                  COMPLETED
-                </span>
-              )
-              : progress?.status === "IN_PROGRESS"
-              ? (
-                <span class="inline-block px-4 py-2 border-2 border-analog-purple bg-analog-purple/20 text-analog-purple font-bold uppercase text-sm">
-                  IN PROGRESS
-                </span>
-              )
-              : (
-                <span class="inline-block px-4 py-2 border-2 border-vhs-gray bg-vhs-gray-dark/50 text-vhs-gray font-bold uppercase text-sm">
-                  NOT STARTED
-                </span>
-              )}
-          </div>
-        </div>
-
-        {/* Media Content */}
-        {hasContent && (
-          <div class="my-8">
-            <MediaContent content={content} />
-          </div>
-        )}
-
-        {/* Submodules List */}
-        {hasSubmodules && (
-          <div class="my-8">
-            <h2 class="text-xl font-bold text-vhs-white-dim uppercase mb-4">
-              &gt; SECTIONS
-            </h2>
-            <div class="space-y-3">
-              {submodules.map((submodule) => (
-                <SubmoduleCard
-                  key={submodule.id}
-                  submodule={submodule}
-                  moduleName={module?.name || ""}
-                />
-              ))}
+            {/* Status indicator */}
+            <div class="mt-6">
+              {is_completed
+                ? (
+                  <span class="inline-block px-4 py-2 border-2 border-t-accent-secondary bg-t-accent-secondary/20 text-t-accent-secondary font-bold uppercase text-sm">
+                    COMPLETED
+                  </span>
+                )
+                : progress?.status === "IN_PROGRESS"
+                ? (
+                  <span class="inline-block px-4 py-2 border-2 border-t-accent bg-t-accent/20 text-t-accent font-bold uppercase text-sm">
+                    IN PROGRESS
+                  </span>
+                )
+                : (
+                  <span class="inline-block px-4 py-2 border-2 border-t-text-muted bg-t-text-muted/10 text-t-text-muted font-bold uppercase text-sm">
+                    NOT STARTED
+                  </span>
+                )}
             </div>
           </div>
-        )}
 
-        {/* Direct Questions (via Island for interactivity) */}
-        {!hasSubmodules && hasQuestions && (
-          <ModuleQuestionnaire
-            moduleName={module?.name || ""}
-            questions={questions}
-            isCompleted={is_completed || false}
-            canReview={can_review || false}
-            authToken={authToken || ""}
-            apiBaseUrl={apiBaseUrl || ""}
-          />
-        )}
+          {/* Media Content */}
+          {hasContent && (
+            <div class="my-8">
+              <MediaContent content={content} />
+            </div>
+          )}
 
-        {/* No content message */}
-        {!hasSubmodules && !hasQuestions && (
-          <div class="text-center my-16">
-            <p class="text-vhs-white-dim text-lg">
-              &gt; NO CONTENT AVAILABLE
-            </p>
-            <p class="text-vhs-gray text-sm mt-2">
-              &gt; THIS MODULE HAS NO QUESTIONS OR SECTIONS
-            </p>
+          {/* Submodules List */}
+          {hasSubmodules && (
+            <div class="my-8">
+              <h2 class="text-xl font-bold text-t-text-dim uppercase mb-4">
+                &gt; SECTIONS
+              </h2>
+              <div class="space-y-3">
+                {submodules.map((submodule) => (
+                  <SubmoduleCard
+                    key={submodule.id}
+                    submodule={submodule}
+                    moduleName={module?.name || ""}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Direct Questions (via Island for interactivity) */}
+          {!hasSubmodules && hasQuestions && (
+            <ModuleQuestionnaire
+              moduleName={module?.name || ""}
+              questions={questions}
+              isCompleted={is_completed || false}
+              canReview={can_review || false}
+              authToken={authToken || ""}
+              apiBaseUrl={apiBaseUrl || ""}
+            />
+          )}
+
+          {/* No content message */}
+          {!hasSubmodules && !hasQuestions && (
+            <div class="text-center my-16">
+              <p class="text-t-text-dim text-lg">
+                &gt; NO CONTENT AVAILABLE
+              </p>
+              <p class="text-t-text-muted text-sm mt-2">
+                &gt; THIS MODULE HAS NO QUESTIONS OR SECTIONS
+              </p>
+            </div>
+          )}
+
+          {/* Navigation */}
+          <div class="my-8 text-center">
+            <a
+              href="/modules"
+              class="text-t-text-muted hover:text-t-text-dim text-sm transition-colors"
+            >
+              &gt; BACK TO MODULES
+            </a>
           </div>
-        )}
-
-        {/* Navigation */}
-        <div class="my-8 text-center">
-          <a
-            href="/modules"
-            class="text-vhs-gray hover:text-vhs-white-dim text-sm transition-colors"
-          >
-            &gt; BACK TO MODULES
-          </a>
         </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -188,14 +188,14 @@ export default function SubmoduleQuestionnaire({
   if (showCompletion.value) {
     return (
       <div class="my-8 text-center">
-        <div class="border-2 border-analog-blue bg-analog-blue/10 p-8 my-6">
-          <h2 class="text-3xl font-bold text-analog-blue text-shadow-vhs-blue uppercase mb-4">
+        <div class="border-2 border-t-accent-secondary bg-t-accent-secondary/10 p-8 my-6">
+          <h2 class="text-3xl font-bold text-t-accent-secondary text-shadow-t-accent uppercase mb-4">
             SECTION COMPLETE
           </h2>
-          <p class="text-vhs-white-dim text-lg mb-6">
+          <p class="text-t-text-dim text-lg mb-6">
             &gt; YOUR RESPONSES HAVE BEEN RECORDED
           </p>
-          <p class="text-vhs-gray text-sm">
+          <p class="text-t-text-muted text-sm">
             &gt; {answeredCount.value} QUESTIONS ANSWERED
           </p>
         </div>
@@ -205,7 +205,7 @@ export default function SubmoduleQuestionnaire({
             ? (
               <a
                 href="/modules"
-                class="inline-block border-2 border-analog-purple px-8 py-4 text-analog-purple font-bold uppercase text-lg transition-colors shadow-vhs-glow-purple text-shadow-void-text bg-decay-smoke/30 hover:bg-decay-smoke/50"
+                class="inline-block border-2 border-t-accent px-8 py-4 text-t-accent font-bold uppercase text-lg transition-colors shadow-t-glow text-shadow-void-text bg-t-surface hover:bg-t-surface-light"
               >
                 &gt; MODULE COMPLETE - CONTINUE
               </a>
@@ -214,7 +214,7 @@ export default function SubmoduleQuestionnaire({
             ? (
               <a
                 href={`/modules/${moduleName}/${nextSubmodule.value}`}
-                class="inline-block border-2 border-analog-purple px-8 py-4 text-analog-purple font-bold uppercase text-lg transition-colors shadow-vhs-glow-purple text-shadow-void-text bg-decay-smoke/30 hover:bg-decay-smoke/50"
+                class="inline-block border-2 border-t-accent px-8 py-4 text-t-accent font-bold uppercase text-lg transition-colors shadow-t-glow text-shadow-void-text bg-t-surface hover:bg-t-surface-light"
               >
                 &gt; CONTINUE TO NEXT SECTION
               </a>
@@ -222,7 +222,7 @@ export default function SubmoduleQuestionnaire({
             : (
               <a
                 href={`/modules/${moduleName}`}
-                class="inline-block border-2 border-analog-blue px-8 py-4 text-analog-blue font-bold uppercase text-lg transition-colors shadow-vhs-glow-blue text-shadow-void-text bg-decay-smoke/30 hover:bg-decay-smoke/50"
+                class="inline-block border-2 border-t-accent-secondary px-8 py-4 text-t-accent-secondary font-bold uppercase text-lg transition-colors shadow-t-glow text-shadow-void-text bg-t-surface hover:bg-t-surface-light"
               >
                 &gt; RETURN TO MODULE
               </a>
@@ -236,8 +236,8 @@ export default function SubmoduleQuestionnaire({
   if (isCompleted) {
     return (
       <div class="my-8">
-        <div class="border-2 border-analog-blue bg-analog-blue/10 px-4 py-3 mb-6">
-          <p class="text-analog-blue font-bold uppercase">
+        <div class="border-2 border-t-accent-secondary bg-t-accent-secondary/10 px-4 py-3 mb-6">
+          <p class="text-t-accent-secondary font-bold uppercase">
             &gt; REVIEW MODE - RESPONSES ARE READ-ONLY
           </p>
         </div>
@@ -248,9 +248,9 @@ export default function SubmoduleQuestionnaire({
             .map((question, index) => (
               <div
                 key={question.id}
-                class="border-2 border-vhs-gray-dark bg-decay-smoke/20 p-4"
+                class="border-2 border-t-border bg-t-surface p-4"
               >
-                <p class="text-vhs-gray text-xs mb-2">
+                <p class="text-t-text-muted text-xs mb-2">
                   QUESTION {String(index + 1).padStart(2, "0")}
                 </p>
                 <QuestionRenderer
@@ -272,11 +272,11 @@ export default function SubmoduleQuestionnaire({
   if (!isStarted.value) {
     return (
       <div class="my-8 text-center">
-        <div class="border-2 border-vhs-gray-dark bg-decay-smoke/30 p-8 my-6">
-          <p class="text-vhs-white-dim text-lg mb-4">
+        <div class="border-2 border-t-border bg-t-surface p-8 my-6">
+          <p class="text-t-text-dim text-lg mb-4">
             &gt; THIS SECTION CONTAINS {questions.length} QUESTIONS
           </p>
-          <p class="text-vhs-gray text-sm mb-6">
+          <p class="text-t-text-muted text-sm mb-6">
             &gt; {requiredCount.value} REQUIRED RESPONSES
           </p>
 
@@ -285,11 +285,11 @@ export default function SubmoduleQuestionnaire({
             onClick={startSubmodule}
             disabled={isSubmitting.value}
             class={`
-              inline-block border-2 border-analog-purple px-10 py-5 text-analog-purple font-bold uppercase text-lg transition-all duration-300 shadow-vhs-glow-purple text-shadow-void-text bg-decay-smoke/30
+              inline-block border-2 border-t-accent px-10 py-5 text-t-accent font-bold uppercase text-lg transition-all duration-300 shadow-t-glow text-shadow-void-text bg-t-surface
               ${
               isSubmitting.value
                 ? "opacity-50 cursor-not-allowed"
-                : "hover:bg-analog-purple/20"
+                : "hover:bg-t-accent/20"
             }
             `}
           >
@@ -298,7 +298,7 @@ export default function SubmoduleQuestionnaire({
         </div>
 
         {error.value && (
-          <p class="text-analog-red text-shadow-vhs-red mt-4">
+          <p class="text-t-accent text-shadow-t-accent mt-4">
             &gt; ERROR: {error.value}
           </p>
         )}
@@ -310,18 +310,18 @@ export default function SubmoduleQuestionnaire({
   return (
     <div class="my-8">
       {/* Progress header */}
-      <div class="border-2 border-vhs-gray-dark bg-decay-smoke/30 px-4 py-3 mb-6">
+      <div class="border-2 border-t-border bg-t-surface px-4 py-3 mb-6">
         <div class="flex justify-between items-center">
-          <p class="text-vhs-white-dim text-sm">
+          <p class="text-t-text-dim text-sm">
             &gt; PROGRESS: {answeredCount.value} / {questions.length} ANSWERED
           </p>
-          <p class="text-vhs-gray text-sm">
+          <p class="text-t-text-muted text-sm">
             {requiredAnswered.value} / {requiredCount.value} REQUIRED
           </p>
         </div>
-        <div class="w-full h-2 bg-decay-ash mt-2">
+        <div class="w-full h-2 bg-t-border mt-2">
           <div
-            class="h-full bg-analog-purple transition-all duration-300"
+            class="h-full bg-t-accent transition-all duration-300"
             style={{
               width: `${(answeredCount.value / questions.length) * 100}%`,
             }}
@@ -331,16 +331,16 @@ export default function SubmoduleQuestionnaire({
 
       {/* Messages */}
       {error.value && (
-        <div class="border-2 border-analog-red bg-analog-red/10 px-4 py-3 mb-6">
-          <p class="text-analog-red text-shadow-vhs-red">
+        <div class="border-2 border-t-accent bg-t-accent/10 px-4 py-3 mb-6">
+          <p class="text-t-accent text-shadow-t-accent">
             &gt; ERROR: {error.value}
           </p>
         </div>
       )}
 
       {success.value && (
-        <div class="border-2 border-analog-blue bg-analog-blue/10 px-4 py-3 mb-6">
-          <p class="text-analog-blue">&gt; {success.value}</p>
+        <div class="border-2 border-t-accent-secondary bg-t-accent-secondary/10 px-4 py-3 mb-6">
+          <p class="text-t-accent-secondary">&gt; {success.value}</p>
         </div>
       )}
 
@@ -351,12 +351,12 @@ export default function SubmoduleQuestionnaire({
           .map((question, index) => (
             <div
               key={question.id}
-              class="border-2 border-vhs-gray-dark bg-decay-smoke/20 p-4"
+              class="border-2 border-t-border bg-t-surface p-4"
             >
-              <p class="text-vhs-gray text-xs mb-2">
+              <p class="text-t-text-muted text-xs mb-2">
                 QUESTION {String(index + 1).padStart(2, "0")}
                 {question.is_required && (
-                  <span class="text-analog-red ml-2">* REQUIRED</span>
+                  <span class="text-t-accent ml-2">* REQUIRED</span>
                 )}
               </p>
               <QuestionRenderer
@@ -377,11 +377,11 @@ export default function SubmoduleQuestionnaire({
           onClick={saveProgress}
           disabled={isSubmitting.value}
           class={`
-            border-2 border-vhs-gray px-6 py-3 text-vhs-gray font-bold uppercase text-sm transition-all duration-200
+            border-2 border-t-text-muted px-6 py-3 text-t-text-muted font-bold uppercase text-sm transition-all duration-200
             ${
             isSubmitting.value
               ? "opacity-50 cursor-not-allowed"
-              : "hover:border-vhs-white-dim hover:text-vhs-white-dim hover:bg-decay-smoke/50"
+              : "hover:border-t-text-dim hover:text-t-text-dim hover:bg-t-surface-light"
           }
           `}
         >
@@ -396,8 +396,8 @@ export default function SubmoduleQuestionnaire({
             border-2 px-8 py-3 font-bold uppercase text-sm transition-all duration-300
             ${
             canSubmit.value && !isSubmitting.value
-              ? "border-analog-purple text-analog-purple shadow-vhs-glow-purple hover:bg-analog-purple/20"
-              : "border-vhs-gray-dark text-vhs-gray opacity-50 cursor-not-allowed"
+              ? "border-t-accent text-t-accent shadow-t-glow hover:bg-t-accent/20"
+              : "border-t-border text-t-text-muted opacity-50 cursor-not-allowed"
           }
           `}
         >

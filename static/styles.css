@@ -124,6 +124,21 @@
 }
 
 @layer base {
+  :root {
+    --theme-bg: #0a0a0a;
+    --theme-text: #e8e8e8;
+    --theme-text-dim: #c0c0c0;
+    --theme-text-muted: #808080;
+    --theme-accent: #9933ff;
+    --theme-accent-dim: #7722cc;
+    --theme-accent-secondary: #3366ff;
+    --theme-surface: rgba(38, 38, 38, 0.3);
+    --theme-surface-light: rgba(38, 38, 38, 0.5);
+    --theme-border: #333333;
+    --theme-glow: 0 0 16px rgba(153, 51, 255, 0.3), 0 2px 8px rgba(0, 0, 0, 0.8);
+    --theme-text-shadow: 0 0 8px rgba(153, 51, 255, 0.6), 2px 2px 4px rgba(0, 0, 0, 0.9);
+  }
+
   body {
     @apply font-mono bg-black text-vhs-white min-h-screen;
     position: relative;
@@ -165,6 +180,82 @@
   h6 {
     @apply font-mono font-bold tracking-wide text-vhs-white;
   }
+}
+
+/* ============================================
+   THEME-SPECIFIC EFFECT OVERRIDES
+   ============================================ */
+
+/* Poolrooms: teal-tinted vignette */
+.theme-poolrooms .effect-crt-vignette::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9996;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 191, 165, 0.03) 0%,
+    rgba(0, 0, 0, 0.4) 70%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
+}
+
+/* Yellow rooms: yellow-tinted grain */
+.theme-yellow .effect-grain-heavy::before {
+  opacity: 0.12;
+}
+
+.theme-yellow .effect-crt-vignette::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9995;
+  background: linear-gradient(
+    rgba(232, 212, 77, 0.02) 0%,
+    rgba(232, 212, 77, 0.04) 50%,
+    rgba(232, 212, 77, 0.02) 100%
+  );
+}
+
+/* Void: deep vignette */
+.theme-void .effect-crt-vignette::before {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.7) 50%,
+    rgba(0, 0, 0, 0.95) 100%
+  );
+}
+
+/* Redrooms: red-tinted grain + scan lines */
+.theme-redrooms .effect-grain::before {
+  background-color: rgba(204, 34, 68, 0.02);
+}
+
+.theme-redrooms .effect-crt-vignette::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9995;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(204, 34, 68, 0.03) 2px,
+    rgba(204, 34, 68, 0.03) 4px
+  );
 }
 
 /* Reduced motion support */

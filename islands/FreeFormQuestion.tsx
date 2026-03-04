@@ -80,9 +80,9 @@ export default function FreeFormQuestion({
   return (
     <div class="my-6">
       <div class="mb-4">
-        <p class="text-lg text-vhs-white font-medium">
-          <span class="text-analog-purple">&gt;</span> {question.question_text}
-          {question.is_required && <span class="text-analog-red ml-2">*</span>}
+        <p class="text-lg text-t-text font-medium">
+          <span class="text-t-accent">&gt;</span> {question.question_text}
+          {question.is_required && <span class="text-t-accent ml-2">*</span>}
         </p>
       </div>
 
@@ -96,16 +96,16 @@ export default function FreeFormQuestion({
           onFocus={() => (isFocused.value = true)}
           onBlur={handleBlur}
           class={`
-            w-full px-4 py-3 border-2 bg-decay-smoke/30 font-mono text-base
-            placeholder:text-vhs-gray-dark placeholder:uppercase
+            w-full px-4 py-3 border-2 bg-t-surface font-mono text-base
+            placeholder:text-t-border placeholder:uppercase
             focus:outline-none transition-all duration-200 resize-none
             ${disabled ? "opacity-50 cursor-not-allowed" : ""}
             ${
             error.value
-              ? "border-analog-red text-analog-red"
+              ? "border-t-accent text-t-accent"
               : isFocused.value
-              ? "border-analog-purple text-vhs-white shadow-vhs-glow-purple"
-              : "border-vhs-gray-dark text-vhs-white-dim hover:border-vhs-gray"
+              ? "border-t-accent text-t-text shadow-t-glow"
+              : "border-t-border text-t-text-dim hover:border-t-text-muted"
           }
           `}
         />
@@ -114,21 +114,21 @@ export default function FreeFormQuestion({
       <div class="flex justify-between items-center mt-2">
         <div>
           {error.value && (
-            <p class="text-sm text-analog-red text-shadow-vhs-red">
+            <p class="text-sm text-t-accent text-shadow-t-accent">
               &gt; ERROR: {error.value}
             </p>
           )}
           {!error.value && metadata.min_words && (
-            <p class="text-sm text-vhs-gray">
+            <p class="text-sm text-t-text-muted">
               &gt; MINIMUM {metadata.min_words} WORDS
             </p>
           )}
         </div>
 
-        <div class="text-sm text-vhs-gray font-mono space-x-4">
+        <div class="text-sm text-t-text-muted font-mono space-x-4">
           <span
             class={metadata.max_words && wordCount.value > metadata.max_words
-              ? "text-analog-red"
+              ? "text-t-accent"
               : ""}
           >
             {wordCount.value} {metadata.max_words && `/ ${metadata.max_words}`}
@@ -138,7 +138,7 @@ export default function FreeFormQuestion({
           {metadata.max_length && (
             <span
               class={charCount.value > metadata.max_length
-                ? "text-analog-red"
+                ? "text-t-accent"
                 : ""}
             >
               {charCount.value} / {metadata.max_length} CHARS

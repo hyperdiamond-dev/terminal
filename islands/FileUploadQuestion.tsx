@@ -218,7 +218,7 @@ export default function FileUploadQuestion({
   if (isLoading.value) {
     return (
       <div class="my-6">
-        <p class="text-vhs-gray text-sm">&gt; LOADING UPLOADS...</p>
+        <p class="text-t-text-muted text-sm">&gt; LOADING UPLOADS...</p>
       </div>
     );
   }
@@ -227,12 +227,12 @@ export default function FileUploadQuestion({
     <div class="my-6">
       {/* Question text */}
       <div class="mb-4">
-        <p class="text-lg text-vhs-white font-medium">
-          <span class="text-analog-purple">&gt;</span> {question.question_text}
-          {question.is_required && <span class="text-analog-red ml-2">*</span>}
+        <p class="text-lg text-t-text font-medium">
+          <span class="text-t-accent">&gt;</span> {question.question_text}
+          {question.is_required && <span class="text-t-accent ml-2">*</span>}
         </p>
         {metadata.prompt && (
-          <p class="text-vhs-gray text-sm mt-1">
+          <p class="text-t-text-muted text-sm mt-1">
             &gt; {metadata.prompt}
           </p>
         )}
@@ -254,17 +254,17 @@ export default function FileUploadQuestion({
             border-2 border-dashed p-8 text-center cursor-pointer transition-all duration-200
             ${
             isDragOver.value
-              ? "border-analog-purple bg-analog-purple/10 shadow-vhs-glow-purple"
-              : "border-vhs-gray-dark hover:border-vhs-gray hover:bg-decay-smoke/30"
+              ? "border-t-accent bg-t-accent/10 shadow-t-glow"
+              : "border-t-border hover:border-t-text-muted hover:bg-t-surface"
           }
           `}
         >
-          <p class="text-vhs-white-dim text-sm uppercase">
+          <p class="text-t-text-dim text-sm uppercase">
             {isDragOver.value
               ? "> DROP FILE HERE"
               : "> CLICK OR DRAG FILE TO UPLOAD"}
           </p>
-          <p class="text-vhs-gray text-xs mt-2">
+          <p class="text-t-text-muted text-xs mt-2">
             MAX {maxSizeMb}MB
             {metadata.allowed_types && metadata.allowed_types.length > 0
               ? ` — ${metadata.allowed_types.join(", ")}`
@@ -282,13 +282,13 @@ export default function FileUploadQuestion({
 
       {/* Upload progress */}
       {isUploading.value && (
-        <div class="border-2 border-vhs-gray-dark bg-decay-smoke/30 p-4">
-          <p class="text-vhs-white-dim text-sm mb-2">
+        <div class="border-2 border-t-border bg-t-surface p-4">
+          <p class="text-t-text-dim text-sm mb-2">
             &gt; UPLOADING... {uploadProgress.value}%
           </p>
-          <div class="w-full h-2 bg-decay-ash">
+          <div class="w-full h-2 bg-t-border">
             <div
-              class="h-full bg-analog-purple transition-all duration-200"
+              class="h-full bg-t-accent transition-all duration-200"
               style={{ width: `${uploadProgress.value}%` }}
             />
           </div>
@@ -298,7 +298,7 @@ export default function FileUploadQuestion({
       {/* Error */}
       {error.value && (
         <div class="mt-3">
-          <p class="text-sm text-analog-red text-shadow-vhs-red">
+          <p class="text-sm text-t-accent text-shadow-t-accent">
             &gt; ERROR: {error.value}
           </p>
         </div>
@@ -307,24 +307,24 @@ export default function FileUploadQuestion({
       {/* Uploaded files list */}
       {uploads.value.length > 0 && (
         <div class="mt-4 space-y-2">
-          <p class="text-vhs-gray text-xs uppercase">
+          <p class="text-t-text-muted text-xs uppercase">
             {uploads.value.length} / {maxFiles} FILE
             {maxFiles > 1 ? "S" : ""} UPLOADED
           </p>
           {uploads.value.map((upload) => (
             <div
               key={upload.id}
-              class="flex items-center justify-between border-2 border-vhs-gray-dark bg-decay-smoke/20 px-4 py-3"
+              class="flex items-center justify-between border-2 border-t-border bg-t-surface px-4 py-3"
             >
               <div class="flex items-center gap-3 min-w-0">
-                <span class="text-analog-cyan font-mono text-xs font-bold shrink-0">
+                <span class="text-t-accent-secondary font-mono text-xs font-bold shrink-0">
                   [{getMimeIcon(upload.mime_type)}]
                 </span>
                 <div class="min-w-0">
-                  <p class="text-vhs-white-dim text-sm truncate">
+                  <p class="text-t-text-dim text-sm truncate">
                     {upload.original_filename}
                   </p>
-                  <p class="text-vhs-gray text-xs">
+                  <p class="text-t-text-muted text-xs">
                     {formatFileSize(upload.file_size)}
                   </p>
                 </div>
@@ -333,7 +333,7 @@ export default function FileUploadQuestion({
                 <button
                   type="button"
                   onClick={() => deleteFile(upload.id)}
-                  class="text-analog-red text-xs font-bold uppercase hover:text-analog-red/80 transition-colors shrink-0 ml-4"
+                  class="text-t-accent text-xs font-bold uppercase hover:text-t-accent/80 transition-colors shrink-0 ml-4"
                 >
                   DELETE
                 </button>
@@ -346,14 +346,14 @@ export default function FileUploadQuestion({
       {/* Empty state in review mode */}
       {disabled && uploads.value.length === 0 && (
         <div class="mt-4">
-          <p class="text-vhs-gray text-sm">&gt; NO FILES UPLOADED</p>
+          <p class="text-t-text-muted text-sm">&gt; NO FILES UPLOADED</p>
         </div>
       )}
 
       {/* Upload count hint */}
       {!disabled && uploads.value.length >= maxFiles && !isUploading.value && (
         <div class="mt-3">
-          <p class="text-vhs-gray text-xs">
+          <p class="text-t-text-muted text-xs">
             &gt; MAXIMUM FILES REACHED
           </p>
         </div>

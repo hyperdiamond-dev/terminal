@@ -34,6 +34,18 @@ export default {
           smoke: "#262626",
           dust: "#333333",
         },
+        t: {
+          bg: "var(--theme-bg)",
+          text: "var(--theme-text)",
+          "text-dim": "var(--theme-text-dim)",
+          "text-muted": "var(--theme-text-muted)",
+          accent: "var(--theme-accent)",
+          "accent-dim": "var(--theme-accent-dim)",
+          "accent-secondary": "var(--theme-accent-secondary)",
+          surface: "var(--theme-surface)",
+          "surface-light": "var(--theme-surface-light)",
+          border: "var(--theme-border)",
+        },
       },
       fontFamily: {
         mono: [
@@ -56,6 +68,7 @@ export default {
         "void-deep":
           "0 8px 32px rgba(0, 0, 0, 0.95), inset 0 2px 8px rgba(0, 0, 0, 0.9)",
         "decay-edge": "0 4px 16px rgba(0, 0, 0, 0.9)",
+        "t-glow": "var(--theme-glow)",
       },
       textShadow: {
         "vhs-red":
@@ -69,6 +82,7 @@ export default {
         "static-text":
           "1px 1px 2px rgba(192, 192, 192, 0.3), 0 0 4px rgba(48, 48, 48, 0.8)",
         "void-text": "2px 2px 6px rgba(0, 0, 0, 1)",
+        "t-accent": "var(--theme-text-shadow)",
       },
       animation: {
         "grain-wobble": "grain-wobble 0.15s steps(8) infinite",

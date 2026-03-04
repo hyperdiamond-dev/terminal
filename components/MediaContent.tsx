@@ -49,7 +49,7 @@ function VideoContent({ item }: { item: ContentItem }) {
         <div class="relative w-full" style={{ paddingBottom: "56.25%" }}>
           <iframe
             src={embedUrl}
-            class="absolute inset-0 w-full h-full border-2 border-vhs-gray-dark"
+            class="absolute inset-0 w-full h-full border-2 border-t-border"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           />
@@ -62,9 +62,9 @@ function VideoContent({ item }: { item: ContentItem }) {
         href={item.url}
         target="_blank"
         rel="noopener noreferrer"
-        class="block border-2 border-vhs-gray-dark bg-decay-smoke/30 p-6 text-center hover:border-analog-purple transition-colors"
+        class="block border-2 border-t-border bg-t-surface p-6 text-center hover:border-t-accent transition-colors"
       >
-        <p class="text-analog-cyan text-sm">&gt; OPEN EXTERNAL VIDEO</p>
+        <p class="text-t-accent-secondary text-sm">&gt; OPEN EXTERNAL VIDEO</p>
       </a>
     );
   }
@@ -76,7 +76,7 @@ function VideoContent({ item }: { item: ContentItem }) {
       poster={item.thumbnail_url || undefined}
       controls
       preload="metadata"
-      class="w-full border-2 border-vhs-gray-dark"
+      class="w-full border-2 border-t-border"
     >
       Your browser does not support video playback.
     </video>
@@ -90,7 +90,7 @@ function ImageContent({ item }: { item: ContentItem }) {
     <img
       src={item.url}
       alt={altText}
-      class="w-full border-2 border-vhs-gray-dark"
+      class="w-full border-2 border-t-border"
       loading="lazy"
     />
   );
@@ -117,31 +117,31 @@ export default function MediaContent({ content }: MediaContentProps) {
       {content.map((item, index) => (
         <div
           key={item.id}
-          class="border-2 border-vhs-gray-dark bg-decay-smoke/20 p-4"
+          class="border-2 border-t-border bg-t-surface p-4"
         >
           {/* Header */}
           <div class="flex items-start justify-between mb-3">
             <div>
               {item.title && (
-                <p class="text-vhs-white font-medium uppercase text-sm">
-                  <span class="text-vhs-gray font-mono mr-2">
+                <p class="text-t-text font-medium uppercase text-sm">
+                  <span class="text-t-text-muted font-mono mr-2">
                     [{String(index + 1).padStart(2, "0")}]
                   </span>
                   {item.title}
                 </p>
               )}
               {item.description && (
-                <p class="text-vhs-white-dim text-sm mt-1">
+                <p class="text-t-text-dim text-sm mt-1">
                   {item.description}
                 </p>
               )}
             </div>
             <div class="flex items-center gap-2 shrink-0">
-              <span class="text-vhs-gray text-xs font-mono uppercase">
+              <span class="text-t-text-muted text-xs font-mono uppercase">
                 {item.content_type}
               </span>
               {item.duration_seconds && (
-                <span class="text-vhs-gray text-xs font-mono">
+                <span class="text-t-text-muted text-xs font-mono">
                   {formatDuration(item.duration_seconds)}
                 </span>
               )}
