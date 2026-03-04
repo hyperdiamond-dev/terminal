@@ -1,6 +1,5 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
 import QuestionRenderer from "../../../islands/QuestionRenderer.tsx";
-import ThemeProvider from "../../../components/ThemeProvider.tsx";
 import { getAuthToken } from "../../../lib/cookies.ts";
 
 interface QuestionInfo {
@@ -121,6 +120,7 @@ export const handler: Handlers<ReviewData> = {
         questions = data.questions || [];
       }
 
+      ctx.state.styleTheme = moduleData.module?.style_theme;
       return ctx.render({
         module: moduleData.module,
         responses,
@@ -172,7 +172,6 @@ export default function ReviewPage({ data }: PageProps<ReviewData>) {
 
   return (
     <>
-      <ThemeProvider styleTheme={module?.style_theme} />
       <div class="container mx-auto py-8 px-4">
         <div class="max-w-screen-md mx-auto">
           {/* Breadcrumb */}

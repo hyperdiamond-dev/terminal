@@ -1,7 +1,6 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
 import SubmoduleQuestionnaire from "../../../islands/SubmoduleQuestionnaire.tsx";
 import MediaContent from "../../../components/MediaContent.tsx";
-import ThemeProvider from "../../../components/ThemeProvider.tsx";
 import { getAuthToken } from "../../../lib/cookies.ts";
 
 interface SubmoduleProgress {
@@ -156,6 +155,7 @@ export const handler: Handlers<SubmoduleData> = {
         }
       }
 
+      ctx.state.styleTheme = parentStyleTheme;
       return ctx.render({
         module: {
           name: moduleName,
@@ -183,7 +183,6 @@ export default function SubmodulePage({ data }: PageProps<SubmoduleData>) {
   if (data?.error) {
     return (
       <>
-        <ThemeProvider styleTheme={data.module?.style_theme} />
         <div class="container mx-auto py-8 px-4">
           <div class="max-w-screen-md mx-auto flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
             <div class="text-center">
@@ -228,7 +227,6 @@ export default function SubmodulePage({ data }: PageProps<SubmoduleData>) {
 
   return (
     <>
-      <ThemeProvider styleTheme={data.module?.style_theme} />
       <div class="container mx-auto py-8 px-4">
         <div class="max-w-screen-md mx-auto">
           {/* Breadcrumb */}

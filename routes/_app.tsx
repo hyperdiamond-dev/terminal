@@ -1,7 +1,8 @@
 import { type PageProps } from "$fresh/server.ts";
 import Header from "../components/Header.tsx";
+import { getTheme } from "../lib/themes.ts";
 
-export default function App({ Component, url }: PageProps) {
+export default function App({ Component, url, state }: PageProps) {
   // Extract current path
   const currentPath = url.pathname;
 
@@ -10,10 +11,16 @@ export default function App({ Component, url }: PageProps) {
   const isStaticPage = staticPages.includes(currentPath) ||
     !currentPath.includes("/module");
 
-  // Apply effect classes based on page type
+  // Resolve theme from route handler state
+  const styleTheme = state?.styleTheme as string | undefined;
+  const theme = getTheme(styleTheme);
+
+  // Apply effect classes based on page type, with theme overrides
   const effectClasses = isStaticPage
     ? "effect-grain-heavy effect-crt-vignette effect-glitch"
-    : "effect-grain effect-crt-vignette effect-chromatic";
+    : theme.effects;
+
+  const bodyClass = [effectClasses, theme.bodyClass].filter(Boolean).join(" ");
 
   // Extract module name from URL if present
   const moduleMatch = currentPath.match(/\/module\/([^\/]+)/);
@@ -31,7 +38,12 @@ export default function App({ Component, url }: PageProps) {
         />
         <link rel="stylesheet" href="/styles.css" />
       </head>
-      <body class={effectClasses}>
+      <body
+        class={bodyClass}
+        style={theme.bodyClass
+          ? { backgroundColor: "var(--theme-bg)", color: "var(--theme-text)" }
+          : undefined}
+      >
         <div class="relative z-10">
           <Header currentPath={currentPath} moduleName={moduleName} />
           <main id="main-content" class="pt-[60px] min-h-screen">

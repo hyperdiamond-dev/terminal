@@ -1,7 +1,6 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
 import ModuleQuestionnaire from "../../islands/ModuleQuestionnaire.tsx";
 import MediaContent from "../../components/MediaContent.tsx";
-import ThemeProvider from "../../components/ThemeProvider.tsx";
 import { getAuthToken } from "../../lib/cookies.ts";
 
 interface ModuleProgress {
@@ -173,6 +172,7 @@ export const handler: Handlers<ModuleData> = {
         }
       }
 
+      ctx.state.styleTheme = moduleData.module?.style_theme;
       return ctx.render({
         module: moduleData.module,
         progress: moduleData.progress,
@@ -327,7 +327,6 @@ export default function ModulePage({ data }: PageProps<ModuleData>) {
 
   return (
     <>
-      <ThemeProvider styleTheme={module?.style_theme} />
       <div class="container mx-auto py-8 px-4">
         <div class="max-w-screen-md mx-auto">
           {/* Module Header */}

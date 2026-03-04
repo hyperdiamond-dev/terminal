@@ -116,9 +116,3 @@ export function getTheme(themeId: string | null | undefined): ThemeConfig {
   }
   return THEMES.vhs;
 }
-
-export function buildThemeStyle(theme: ThemeConfig): string {
-  return Object.entries(theme.cssVars)
-    .map(([k, v]) => `${k}: ${v}`)
-    .join("; ");
-}
