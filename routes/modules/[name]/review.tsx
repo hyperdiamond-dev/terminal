@@ -1,6 +1,7 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
 import QuestionRenderer from "../../../islands/QuestionRenderer.tsx";
 import { getAuthToken } from "../../../lib/cookies.ts";
+import { getTheme } from "../../../lib/themes.ts";
 
 interface QuestionInfo {
   id: number;
@@ -120,7 +121,7 @@ export const handler: Handlers<ReviewData> = {
         questions = data.questions || [];
       }
 
-      ctx.state.styleTheme = moduleData.module?.style_theme;
+      ctx.state.resolvedTheme = await getTheme(moduleData.module?.style_theme);
       return ctx.render({
         module: moduleData.module,
         responses,

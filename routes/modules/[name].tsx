@@ -2,6 +2,7 @@ import { Handlers, PageProps } from "$fresh/server.ts";
 import ModuleQuestionnaire from "../../islands/ModuleQuestionnaire.tsx";
 import MediaContent from "../../components/MediaContent.tsx";
 import { getAuthToken } from "../../lib/cookies.ts";
+import { getTheme } from "../../lib/themes.ts";
 
 interface ModuleProgress {
   status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
@@ -172,7 +173,7 @@ export const handler: Handlers<ModuleData> = {
         }
       }
 
-      ctx.state.styleTheme = moduleData.module?.style_theme;
+      ctx.state.resolvedTheme = await getTheme(moduleData.module?.style_theme);
       return ctx.render({
         module: moduleData.module,
         progress: moduleData.progress,

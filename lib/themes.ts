@@ -1,118 +1,63 @@
-export type StyleTheme =
-  | "vhs"
-  | "poolrooms"
-  | "backrooms_yellow"
-  | "void"
-  | "redrooms";
-
 export interface ThemeConfig {
-  id: StyleTheme;
+  id: string;
   label: string;
   cssVars: Record<string, string>;
   effects: string;
   bodyClass?: string;
 }
 
-export const THEMES: Record<StyleTheme, ThemeConfig> = {
-  vhs: {
-    id: "vhs",
-    label: "VHS Static",
-    cssVars: {},
-    effects: "effect-grain effect-crt-vignette effect-chromatic",
-  },
-  poolrooms: {
-    id: "poolrooms",
-    label: "The Poolrooms",
-    cssVars: {
-      "--theme-bg": "#0a1a1a",
-      "--theme-text": "#c8e6e6",
-      "--theme-text-dim": "#7ab8b8",
-      "--theme-text-muted": "#4a8888",
-      "--theme-accent": "#00bfa5",
-      "--theme-accent-dim": "#009688",
-      "--theme-accent-secondary": "#4dd0e1",
-      "--theme-surface": "rgba(13, 38, 38, 0.8)",
-      "--theme-surface-light": "rgba(20, 51, 51, 0.8)",
-      "--theme-border": "#1a4040",
-      "--theme-glow":
-        "0 0 16px rgba(0, 191, 165, 0.3), 0 2px 8px rgba(0, 0, 0, 0.8)",
-      "--theme-text-shadow":
-        "0 0 8px rgba(0, 191, 165, 0.6), 2px 2px 4px rgba(0, 0, 0, 0.9)",
-    },
-    effects: "effect-grain effect-crt-vignette",
-    bodyClass: "theme-poolrooms",
-  },
-  backrooms_yellow: {
-    id: "backrooms_yellow",
-    label: "Level 0",
-    cssVars: {
-      "--theme-bg": "#1a1608",
-      "--theme-text": "#e8d44d",
-      "--theme-text-dim": "#b8a43d",
-      "--theme-text-muted": "#8a7a2e",
-      "--theme-accent": "#e8d44d",
-      "--theme-accent-dim": "#c4b340",
-      "--theme-accent-secondary": "#d4a030",
-      "--theme-surface": "rgba(37, 32, 16, 0.8)",
-      "--theme-surface-light": "rgba(51, 44, 22, 0.8)",
-      "--theme-border": "#4a4020",
-      "--theme-glow":
-        "0 0 16px rgba(232, 212, 77, 0.25), 0 2px 8px rgba(0, 0, 0, 0.8)",
-      "--theme-text-shadow":
-        "0 0 8px rgba(232, 212, 77, 0.5), 2px 2px 4px rgba(0, 0, 0, 0.9)",
-    },
-    effects: "effect-grain-heavy effect-crt-vignette",
-    bodyClass: "theme-yellow",
-  },
-  void: {
-    id: "void",
-    label: "The Void",
-    cssVars: {
-      "--theme-bg": "#020202",
-      "--theme-text": "#888888",
-      "--theme-text-dim": "#555555",
-      "--theme-text-muted": "#333333",
-      "--theme-accent": "#6a0dad",
-      "--theme-accent-dim": "#4a0a7a",
-      "--theme-accent-secondary": "#8b5cf6",
-      "--theme-surface": "rgba(8, 8, 8, 0.8)",
-      "--theme-surface-light": "rgba(16, 16, 16, 0.8)",
-      "--theme-border": "#1a1a1a",
-      "--theme-glow":
-        "0 0 24px rgba(106, 13, 173, 0.2), 0 2px 8px rgba(0, 0, 0, 0.9)",
-      "--theme-text-shadow":
-        "0 0 12px rgba(106, 13, 173, 0.4), 2px 2px 6px rgba(0, 0, 0, 1)",
-    },
-    effects: "effect-crt-vignette",
-    bodyClass: "theme-void",
-  },
-  redrooms: {
-    id: "redrooms",
-    label: "The Crimson Halls",
-    cssVars: {
-      "--theme-bg": "#0a0505",
-      "--theme-text": "#e8c0c0",
-      "--theme-text-dim": "#b08080",
-      "--theme-text-muted": "#805050",
-      "--theme-accent": "#cc2244",
-      "--theme-accent-dim": "#991133",
-      "--theme-accent-secondary": "#e65030",
-      "--theme-surface": "rgba(26, 10, 10, 0.8)",
-      "--theme-surface-light": "rgba(42, 16, 16, 0.8)",
-      "--theme-border": "#401515",
-      "--theme-glow":
-        "0 0 16px rgba(204, 34, 68, 0.3), 0 2px 8px rgba(0, 0, 0, 0.8)",
-      "--theme-text-shadow":
-        "0 0 8px rgba(204, 34, 68, 0.6), 2px 2px 4px rgba(0, 0, 0, 0.9)",
-    },
-    effects: "effect-grain effect-crt-vignette",
-    bodyClass: "theme-redrooms",
-  },
+// Default fallback theme when API is unreachable
+const DEFAULT_THEME: ThemeConfig = {
+  id: "vhs",
+  label: "VHS Static",
+  cssVars: {},
+  effects: "effect-grain effect-crt-vignette effect-chromatic",
 };
 
-export function getTheme(themeId: string | null | undefined): ThemeConfig {
-  if (themeId && themeId in THEMES) {
-    return THEMES[themeId as StyleTheme];
+const API_BASE_URL = Deno.env.get("API_BASE_URL") || "http://localhost:8000";
+
+// In-memory cache with TTL
+let themesCache: ThemeConfig[] | null = null;
+let cacheExpiry = 0;
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+export async function fetchThemes(): Promise<ThemeConfig[]> {
+  if (themesCache && Date.now() < cacheExpiry) {
+    return themesCache;
   }
-  return THEMES.vhs;
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/themes`);
+    if (!res.ok) throw new Error("Failed to fetch themes");
+    const data = await res.json();
+    themesCache = data.themes.map(
+      (t: {
+        name: string;
+        label: string;
+        css_vars: Record<string, string>;
+        effects: string;
+        body_class?: string | null;
+      }) => ({
+        id: t.name,
+        label: t.label,
+        cssVars: t.css_vars,
+        effects: t.effects,
+        bodyClass: t.body_class || undefined,
+      }),
+    );
+    cacheExpiry = Date.now() + CACHE_TTL_MS;
+    return themesCache!;
+  } catch {
+    return [DEFAULT_THEME];
+  }
+}
+
+export async function getTheme(
+  themeId: string | null | undefined,
+): Promise<ThemeConfig> {
+  const themes = await fetchThemes();
+  if (themeId) {
+    const found = themes.find((t) => t.id === themeId);
+    if (found) return found;
+  }
+  return themes.find((t) => t.id === "vhs") || DEFAULT_THEME;
 }

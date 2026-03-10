@@ -2,6 +2,7 @@ import { Handlers, PageProps } from "$fresh/server.ts";
 import SubmoduleQuestionnaire from "../../../islands/SubmoduleQuestionnaire.tsx";
 import MediaContent from "../../../components/MediaContent.tsx";
 import { getAuthToken } from "../../../lib/cookies.ts";
+import { getTheme } from "../../../lib/themes.ts";
 
 interface SubmoduleProgress {
   status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
@@ -155,7 +156,7 @@ export const handler: Handlers<SubmoduleData> = {
         }
       }
 
-      ctx.state.styleTheme = parentStyleTheme;
+      ctx.state.resolvedTheme = await getTheme(parentStyleTheme);
       return ctx.render({
         module: {
           name: moduleName,
