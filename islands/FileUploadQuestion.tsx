@@ -226,17 +226,21 @@ export default function FileUploadQuestion({
   return (
     <div class="my-6">
       {/* Question text */}
-      <div class="mb-4">
-        <p class="text-lg text-t-text font-medium">
-          <span class="text-t-accent">&gt;</span> {question.question_text}
-          {question.is_required && <span class="text-t-accent ml-2">*</span>}
-        </p>
-        {metadata.prompt && (
+      {question.question_text && (
+        <div class="mb-4">
+          <p class="text-lg text-t-text font-medium">
+            <span class="text-t-accent">&gt;</span> {question.question_text}
+            {question.is_required && <span class="text-t-accent ml-2">*</span>}
+          </p>
+        </div>
+      )}
+      {metadata.prompt && (
+        <div class="mb-4">
           <p class="text-t-text-muted text-sm mt-1">
             &gt; {metadata.prompt}
           </p>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Drop zone (only when not disabled and can upload more) */}
       {canUploadMore.value && !isUploading.value && (
