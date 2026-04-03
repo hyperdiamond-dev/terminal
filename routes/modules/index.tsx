@@ -1,4 +1,5 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
+import Breadcrumbs, { BreadcrumbItem } from "../../components/Breadcrumbs.tsx";
 import { api } from "../../lib/api.ts";
 import { getAuthToken } from "../../lib/cookies.ts";
 
@@ -161,9 +162,18 @@ export default function ModulesPage({ data }: PageProps<ModulesData>) {
   const modules = data?.modules || [];
   const progress = data?.progress;
 
+  // Build breadcrumbs
+  const breadcrumbs: BreadcrumbItem[] = [
+    { label: "Dashboard", href: "/dashboard", icon: "[◆]" },
+    { label: "Modules", icon: "[▣]" },
+  ];
+
   return (
     <div class="container mx-auto py-8 px-4">
       <div class="max-w-screen-md mx-auto">
+        {/* Breadcrumbs */}
+        <Breadcrumbs items={breadcrumbs} />
+
         <div class="text-center my-8">
           <h1 class="text-4xl font-bold text-vhs-white text-shadow-vhs-purple my-6 uppercase tracking-wider">
             RESEARCH MODULES

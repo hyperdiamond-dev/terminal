@@ -50,6 +50,8 @@ export default function FileUploadQuestion({
   const error = useSignal<string | null>(null);
   const isDragOver = useSignal(false);
   const isLoading = useSignal(true);
+  const previewFile = useSignal<File | null>(null);
+  const previewUrl = useSignal<string | null>(null);
 
   const uploadIds = useComputed(() => uploads.value.map((u) => u.id));
   const canUploadMore = useComputed(
@@ -119,6 +121,12 @@ export default function FileUploadQuestion({
       return;
     }
 
+    // Generate preview for images/videos
+    if (file.type.startsWith("image/") || file.type.startsWith("video/")) {
+      previewFile.value = file;
+      previewUrl.value = URL.createObjectURL(file);
+    }
+
     error.value = null;
     isUploading.value = true;
     uploadProgress.value = 0;
@@ -165,6 +173,12 @@ export default function FileUploadQuestion({
     } finally {
       isUploading.value = false;
       uploadProgress.value = 0;
+      // Clear preview after upload
+      if (previewUrl.value) {
+        URL.revokeObjectURL(previewUrl.value);
+        previewUrl.value = null;
+        previewFile.value = null;
+      }
     }
   };
 
@@ -308,6 +322,32 @@ export default function FileUploadQuestion({
         </div>
       )}
 
+      {/* File preview during upload */}
+      {isUploading.value && previewUrl.value && previewFile.value && (
+        <div class="mt-4 border-2 border-t-accent bg-t-surface p-4">
+          <p class="text-t-text-dim text-xs uppercase mb-3">
+            &gt; PREVIEW
+          </p>
+          {previewFile.value.type.startsWith("image/") && (
+            <img
+              src={previewUrl.value}
+              alt="Upload preview"
+              class="max-w-full h-auto max-h-64 border-2 border-t-border"
+            />
+          )}
+          {previewFile.value.type.startsWith("video/") && (
+            <video
+              src={previewUrl.value}
+              controls
+              class="max-w-full h-auto max-h-64 border-2 border-t-border"
+            />
+          )}
+          <p class="text-t-text-muted text-xs mt-2">
+            {previewFile.value.name} — {formatFileSize(previewFile.value.size)}
+          </p>
+        </div>
+      )}
+
       {/* Uploaded files list */}
       {uploads.value.length > 0 && (
         <div class="mt-4 space-y-2">
@@ -318,30 +358,43 @@ export default function FileUploadQuestion({
           {uploads.value.map((upload) => (
             <div
               key={upload.id}
-              class="flex items-center justify-between border-2 border-t-border bg-t-surface px-4 py-3"
+              class="border-2 border-t-border bg-t-surface overflow-hidden"
             >
-              <div class="flex items-center gap-3 min-w-0">
-                <span class="text-t-accent-secondary font-mono text-xs font-bold shrink-0">
-                  [{getMimeIcon(upload.mime_type)}]
-                </span>
-                <div class="min-w-0">
-                  <p class="text-t-text-dim text-sm truncate">
-                    {upload.original_filename}
-                  </p>
-                  <p class="text-t-text-muted text-xs">
-                    {formatFileSize(upload.file_size)}
-                  </p>
+              {/* Thumbnail preview for images */}
+              {upload.mime_type.startsWith("image/") && upload.storage_url && (
+                <div class="w-full h-32 bg-black flex items-center justify-center overflow-hidden">
+                  <img
+                    src={upload.storage_url}
+                    alt={upload.original_filename}
+                    class="max-w-full max-h-full object-contain"
+                  />
                 </div>
-              </div>
-              {!disabled && (
-                <button
-                  type="button"
-                  onClick={() => deleteFile(upload.id)}
-                  class="text-t-accent text-xs font-bold uppercase hover:text-t-accent/80 transition-colors shrink-0 ml-4"
-                >
-                  DELETE
-                </button>
               )}
+
+              <div class="flex items-center justify-between px-4 py-3">
+                <div class="flex items-center gap-3 min-w-0">
+                  <span class="text-t-accent-secondary font-mono text-xs font-bold shrink-0">
+                    [{getMimeIcon(upload.mime_type)}]
+                  </span>
+                  <div class="min-w-0">
+                    <p class="text-t-text-dim text-sm truncate">
+                      {upload.original_filename}
+                    </p>
+                    <p class="text-t-text-muted text-xs">
+                      {formatFileSize(upload.file_size)}
+                    </p>
+                  </div>
+                </div>
+                {!disabled && (
+                  <button
+                    type="button"
+                    onClick={() => deleteFile(upload.id)}
+                    class="text-t-accent text-xs font-bold uppercase hover:text-t-accent/80 transition-colors shrink-0 ml-4"
+                  >
+                    DELETE
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>

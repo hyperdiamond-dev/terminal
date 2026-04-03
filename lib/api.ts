@@ -83,6 +83,19 @@ export interface QuestionResponse {
   updated_at: string;
 }
 
+export interface ContentItem {
+  id: number;
+  content_type: "video" | "image" | "audio";
+  title: string | null;
+  description: string | null;
+  url: string;
+  thumbnail_url: string | null;
+  duration_seconds: number | null;
+  sequence_order: number;
+  is_external: boolean;
+  metadata: Record<string, unknown>;
+}
+
 class ApiClient {
   private baseUrl: string;
   private token: string | null = null;
@@ -273,6 +286,21 @@ class ApiClient {
     return this.request<QuestionResponse | null>(
       `/api/questions/${questionId}/response`,
     );
+  }
+
+  // Content endpoints
+  async getModuleContent(moduleId: number): Promise<ContentItem[]> {
+    const response = await this.request<{ content: ContentItem[] }>(
+      `/api/content/module/${moduleId}`,
+    );
+    return response.content || [];
+  }
+
+  async getSubmoduleContent(submoduleId: number): Promise<ContentItem[]> {
+    const response = await this.request<{ content: ContentItem[] }>(
+      `/api/content/submodule/${submoduleId}`,
+    );
+    return response.content || [];
   }
 }
 
