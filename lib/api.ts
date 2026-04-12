@@ -60,7 +60,8 @@ export interface Question {
     | "multiple_choice"
     | "fill_blank"
     | "free_form"
-    | "file_upload";
+    | "file_upload"
+    | "note";
   is_required: boolean;
   sequence_order: number;
   metadata: Record<string, unknown>;

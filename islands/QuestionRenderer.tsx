@@ -4,6 +4,7 @@ import TrueFalseQuestion from "./TrueFalseQuestion.tsx";
 import FillBlankQuestion from "./FillBlankQuestion.tsx";
 import FreeFormQuestion from "./FreeFormQuestion.tsx";
 import FileUploadQuestion from "./FileUploadQuestion.tsx";
+import NoteQuestion from "./NoteQuestion.tsx";
 
 type ResponseValue = string | string[] | boolean;
 
@@ -72,6 +73,18 @@ export default function QuestionRenderer({
     case "file_upload":
       return (
         <FileUploadQuestion
+          question={question}
+          onAnswer={handleAnswer as (value: string) => void}
+          value={value as string | undefined}
+          disabled={disabled}
+          authToken={authToken || ""}
+          apiBaseUrl={apiBaseUrl || ""}
+        />
+      );
+
+    case "note":
+      return (
+        <NoteQuestion
           question={question}
           onAnswer={handleAnswer as (value: string) => void}
           value={value as string | undefined}
