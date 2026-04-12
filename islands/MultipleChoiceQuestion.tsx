@@ -59,10 +59,12 @@ export default function MultipleChoiceQuestion({
   return (
     <div class="my-6">
       <div class="mb-4">
-        <p class="text-lg text-t-text font-medium">
-          <span class="text-t-accent">&gt;</span> {question.question_text}
-          {question.is_required && <span class="text-t-accent ml-2">*</span>}
-        </p>
+        {question.question_text && (
+          <p class="text-lg text-t-text font-medium">
+            <span class="text-t-accent">&gt;</span> {question.question_text}
+            {question.is_required && <span class="text-t-accent ml-2">*</span>}
+          </p>
+        )}
         {allowMultiple && (
           <p class="text-sm text-t-text-muted mt-1">
             &gt; SELECT ALL THAT APPLY

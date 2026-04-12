@@ -1,7 +1,10 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
 import ModuleQuestionnaire from "../../islands/ModuleQuestionnaire.tsx";
 import MediaContent from "../../components/MediaContent.tsx";
+import Breadcrumbs, { BreadcrumbItem } from "../../components/Breadcrumbs.tsx";
 import { getAuthToken } from "../../lib/cookies.ts";
+import { getTheme } from "../../lib/themes.ts";
+import type { ContentItem } from "../../lib/api.ts";
 
 interface ModuleProgress {
   status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
@@ -36,19 +39,6 @@ interface QuestionInfo {
     response_value: unknown;
     answered_at: string;
   } | null;
-}
-
-interface ContentItem {
-  id: number;
-  content_type: "video" | "image" | "audio";
-  title: string | null;
-  description: string | null;
-  url: string;
-  thumbnail_url: string | null;
-  duration_seconds: number | null;
-  sequence_order: number;
-  is_external: boolean;
-  metadata: Record<string, unknown>;
 }
 
 interface ModuleData {
@@ -172,7 +162,7 @@ export const handler: Handlers<ModuleData> = {
         }
       }
 
-      ctx.state.styleTheme = moduleData.module?.style_theme;
+      ctx.state.resolvedTheme = await getTheme(moduleData.module?.style_theme);
       return ctx.render({
         module: moduleData.module,
         progress: moduleData.progress,
@@ -325,10 +315,20 @@ export default function ModulePage({ data }: PageProps<ModuleData>) {
   const hasQuestions = questions.length > 0;
   const hasContent = content.length > 0;
 
+  // Build breadcrumbs
+  const breadcrumbs: BreadcrumbItem[] = [
+    { label: "Dashboard", href: "/dashboard", icon: "[◆]" },
+    { label: "Modules", href: "/modules", icon: "[▣]" },
+    { label: module?.title || "Module", icon: "[►]" },
+  ];
+
   return (
     <>
       <div class="container mx-auto py-8 px-4">
         <div class="max-w-screen-md mx-auto">
+          {/* Breadcrumbs */}
+          <Breadcrumbs items={breadcrumbs} />
+
           {/* Module Header */}
           <div class="text-center my-8">
             <p class="text-t-text-muted text-sm mb-2">

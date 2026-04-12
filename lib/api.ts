@@ -60,7 +60,8 @@ export interface Question {
     | "multiple_choice"
     | "fill_blank"
     | "free_form"
-    | "file_upload";
+    | "file_upload"
+    | "note";
   is_required: boolean;
   sequence_order: number;
   metadata: Record<string, unknown>;
@@ -81,6 +82,19 @@ export interface QuestionResponse {
   response_value: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface ContentItem {
+  id: number;
+  content_type: "video" | "image" | "audio";
+  title: string | null;
+  description: string | null;
+  url: string;
+  thumbnail_url: string | null;
+  duration_seconds: number | null;
+  sequence_order: number;
+  is_external: boolean;
+  metadata: Record<string, unknown>;
 }
 
 class ApiClient {
@@ -273,6 +287,21 @@ class ApiClient {
     return this.request<QuestionResponse | null>(
       `/api/questions/${questionId}/response`,
     );
+  }
+
+  // Content endpoints
+  async getModuleContent(moduleId: number): Promise<ContentItem[]> {
+    const response = await this.request<{ content: ContentItem[] }>(
+      `/api/content/module/${moduleId}`,
+    );
+    return response.content || [];
+  }
+
+  async getSubmoduleContent(submoduleId: number): Promise<ContentItem[]> {
+    const response = await this.request<{ content: ContentItem[] }>(
+      `/api/content/submodule/${submoduleId}`,
+    );
+    return response.content || [];
   }
 }
 

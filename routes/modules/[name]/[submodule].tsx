@@ -1,7 +1,12 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
 import SubmoduleQuestionnaire from "../../../islands/SubmoduleQuestionnaire.tsx";
 import MediaContent from "../../../components/MediaContent.tsx";
+import Breadcrumbs, {
+  BreadcrumbItem,
+} from "../../../components/Breadcrumbs.tsx";
 import { getAuthToken } from "../../../lib/cookies.ts";
+import { getTheme } from "../../../lib/themes.ts";
+import type { ContentItem } from "../../../lib/api.ts";
 
 interface SubmoduleProgress {
   status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
@@ -20,19 +25,6 @@ interface QuestionInfo {
     response_value: unknown;
     answered_at: string;
   } | null;
-}
-
-interface ContentItem {
-  id: number;
-  content_type: "video" | "image" | "audio";
-  title: string | null;
-  description: string | null;
-  url: string;
-  thumbnail_url: string | null;
-  duration_seconds: number | null;
-  sequence_order: number;
-  is_external: boolean;
-  metadata: Record<string, unknown>;
 }
 
 interface SubmoduleData {
@@ -155,7 +147,7 @@ export const handler: Handlers<SubmoduleData> = {
         }
       }
 
-      ctx.state.styleTheme = parentStyleTheme;
+      ctx.state.resolvedTheme = await getTheme(parentStyleTheme);
       return ctx.render({
         module: {
           name: moduleName,
@@ -225,19 +217,24 @@ export default function SubmodulePage({ data }: PageProps<SubmoduleData>) {
     apiBaseUrl,
   } = data;
 
+  // Build breadcrumbs
+  const breadcrumbs: BreadcrumbItem[] = [
+    { label: "Dashboard", href: "/dashboard", icon: "[◆]" },
+    { label: "Modules", href: "/modules", icon: "[▣]" },
+    {
+      label: module?.title || "Module",
+      href: module?.name ? `/modules/${module.name}` : undefined,
+      icon: "[►]",
+    },
+    { label: submodule?.title || "Section", icon: "[●]" },
+  ];
+
   return (
     <>
       <div class="container mx-auto py-8 px-4">
         <div class="max-w-screen-md mx-auto">
-          {/* Breadcrumb */}
-          <div class="mb-6">
-            <a
-              href={`/modules/${module?.name}`}
-              class="text-t-text-muted hover:text-t-text-dim text-sm transition-colors"
-            >
-              &lt; BACK TO {module?.title?.toUpperCase() || "MODULE"}
-            </a>
-          </div>
+          {/* Breadcrumbs */}
+          <Breadcrumbs items={breadcrumbs} />
 
           {/* Submodule Header */}
           <div class="text-center my-8">

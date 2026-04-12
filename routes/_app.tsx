@@ -1,6 +1,14 @@
 import { type PageProps } from "$fresh/server.ts";
 import Header from "../components/Header.tsx";
-import { getTheme } from "../lib/themes.ts";
+import type { ThemeConfig } from "../lib/themes.ts";
+
+// Default fallback for when no theme is resolved by route handlers
+const DEFAULT_THEME: ThemeConfig = {
+  id: "vhs",
+  label: "VHS Static",
+  cssVars: {},
+  effects: "effect-grain effect-crt-vignette effect-chromatic",
+};
 
 export default function App({ Component, url, state }: PageProps) {
   // Extract current path
@@ -11,9 +19,8 @@ export default function App({ Component, url, state }: PageProps) {
   const isStaticPage = staticPages.includes(currentPath) ||
     !currentPath.includes("/module");
 
-  // Resolve theme from route handler state
-  const styleTheme = state?.styleTheme as string | undefined;
-  const theme = getTheme(styleTheme);
+  // Resolve theme from route handler state (already fetched async in handlers)
+  const theme = (state?.resolvedTheme as ThemeConfig) || DEFAULT_THEME;
 
   // Apply effect classes based on page type, with theme overrides
   const effectClasses = isStaticPage
@@ -21,6 +28,14 @@ export default function App({ Component, url, state }: PageProps) {
     : theme.effects;
 
   const bodyClass = [effectClasses, theme.bodyClass].filter(Boolean).join(" ");
+
+  // Build inline styles: inject CSS custom properties from theme
+  const bodyStyle: Record<string, string> = {};
+  if (Object.keys(theme.cssVars).length > 0) {
+    Object.assign(bodyStyle, theme.cssVars);
+    bodyStyle.backgroundColor = "var(--theme-bg)";
+    bodyStyle.color = "var(--theme-text)";
+  }
 
   // Extract module name from URL if present
   const moduleMatch = currentPath.match(/\/module\/([^\/]+)/);
@@ -40,9 +55,7 @@ export default function App({ Component, url, state }: PageProps) {
       </head>
       <body
         class={bodyClass}
-        style={theme.bodyClass
-          ? { backgroundColor: "var(--theme-bg)", color: "var(--theme-text)" }
-          : undefined}
+        style={Object.keys(bodyStyle).length > 0 ? bodyStyle : undefined}
       >
         <div class="relative z-10">
           <Header currentPath={currentPath} moduleName={moduleName} />

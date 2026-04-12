@@ -1,18 +1,14 @@
-interface ContentItem {
-  id: number;
-  content_type: "video" | "image" | "audio";
-  title: string | null;
-  description: string | null;
-  url: string;
-  thumbnail_url: string | null;
-  duration_seconds: number | null;
-  sequence_order: number;
-  is_external: boolean;
-  metadata: Record<string, unknown>;
-}
+import ImageGallery from "../islands/ImageGallery.tsx";
+import VideoPlayer from "../islands/VideoPlayer.tsx";
+import ContentCarousel from "../islands/ContentCarousel.tsx";
+import type { ContentItem } from "../lib/api.ts";
 
 interface MediaContentProps {
   content: ContentItem[];
+  /** Display mode: 'default' (grouped by type) or 'carousel' (unified slideshow) */
+  mode?: "default" | "carousel";
+  /** Auto-advance interval in seconds (carousel mode only, 0 = disabled) */
+  autoAdvanceInterval?: number;
 }
 
 function getYouTubeEmbedUrl(url: string): string | null {
@@ -69,52 +65,76 @@ function VideoContent({ item }: { item: ContentItem }) {
     );
   }
 
-  // R2-hosted video
+  // R2-hosted video with custom VHS-styled controls
   return (
-    <video
-      src={item.url}
-      poster={item.thumbnail_url || undefined}
-      controls
-      preload="metadata"
-      class="w-full border-2 border-t-border"
-    >
-      Your browser does not support video playback.
-    </video>
+    <div class="border-2 border-t-border overflow-hidden">
+      <VideoPlayer
+        src={item.url}
+        poster={item.thumbnail_url || undefined}
+        title={item.title || undefined}
+        className="w-full"
+      />
+    </div>
   );
 }
 
-function ImageContent({ item }: { item: ContentItem }) {
-  const altText = (item.metadata?.alt_text as string) || item.title ||
-    "Module content image";
+// ImageContent is now handled by ImageGallery island
+
+// Import AudioPlayer island (dynamically loaded by Fresh)
+import AudioPlayer from "../islands/AudioPlayer.tsx";
+
+function AudioContent({ item }: { item: ContentItem }) {
   return (
-    <img
-      src={item.url}
-      alt={altText}
-      class="w-full border-2 border-t-border"
-      loading="lazy"
+    <AudioPlayer
+      url={item.url}
+      title={item.title}
+      duration={item.duration_seconds || undefined}
     />
   );
 }
 
-function AudioContent({ item }: { item: ContentItem }) {
-  return (
-    <audio
-      src={item.url}
-      controls
-      preload="metadata"
-      class="w-full"
-    >
-      Your browser does not support audio playback.
-    </audio>
-  );
-}
-
-export default function MediaContent({ content }: MediaContentProps) {
+export default function MediaContent(
+  { content, mode = "default", autoAdvanceInterval = 0 }: MediaContentProps,
+) {
   if (content.length === 0) return null;
+
+  // Carousel mode: unified slideshow for all content types
+  if (mode === "carousel") {
+    return (
+      <ContentCarousel
+        content={content}
+        autoAdvanceInterval={autoAdvanceInterval}
+      />
+    );
+  }
+
+  // Default mode: group content by type
+  const images = content.filter((item) => item.content_type === "image");
+  const videos = content.filter((item) => item.content_type === "video");
+  const audio = content.filter((item) => item.content_type === "audio");
 
   return (
     <div class="space-y-6">
-      {content.map((item, index) => (
+      {/* Image Gallery Section */}
+      {images.length > 0 && (
+        <div class="border-2 border-t-border bg-t-surface p-4">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-t-text font-medium uppercase text-sm">
+              <span class="text-t-text-muted font-mono mr-2">
+                [IMG]
+              </span>
+              Image Gallery
+              <span class="text-t-text-muted text-xs ml-2">
+                ({images.length} {images.length === 1 ? "image" : "images"})
+              </span>
+            </h3>
+          </div>
+          <ImageGallery images={images} />
+        </div>
+      )}
+
+      {/* Video Content */}
+      {videos.map((item, index) => (
         <div
           key={item.id}
           class="border-2 border-t-border bg-t-surface p-4"
@@ -149,9 +169,47 @@ export default function MediaContent({ content }: MediaContentProps) {
           </div>
 
           {/* Media */}
-          {item.content_type === "video" && <VideoContent item={item} />}
-          {item.content_type === "image" && <ImageContent item={item} />}
-          {item.content_type === "audio" && <AudioContent item={item} />}
+          <VideoContent item={item} />
+        </div>
+      ))}
+
+      {/* Audio Content */}
+      {audio.map((item, index) => (
+        <div
+          key={item.id}
+          class="border-2 border-t-border bg-t-surface p-4"
+        >
+          {/* Header */}
+          <div class="flex items-start justify-between mb-3">
+            <div>
+              {item.title && (
+                <p class="text-t-text font-medium uppercase text-sm">
+                  <span class="text-t-text-muted font-mono mr-2">
+                    [{String(index + 1).padStart(2, "0")}]
+                  </span>
+                  {item.title}
+                </p>
+              )}
+              {item.description && (
+                <p class="text-t-text-dim text-sm mt-1">
+                  {item.description}
+                </p>
+              )}
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="text-t-text-muted text-xs font-mono uppercase">
+                {item.content_type}
+              </span>
+              {item.duration_seconds && (
+                <span class="text-t-text-muted text-xs font-mono">
+                  {formatDuration(item.duration_seconds)}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Media */}
+          <AudioContent item={item} />
         </div>
       ))}
     </div>

@@ -1,4 +1,5 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
+import Breadcrumbs, { BreadcrumbItem } from "../components/Breadcrumbs.tsx";
 import { getAuthToken } from "../lib/cookies.ts";
 
 const API_BASE_URL = Deno.env.get("API_BASE_URL") || "http://localhost:8000";
@@ -185,9 +186,17 @@ export default function Dashboard({ data }: PageProps<DashboardData>) {
   const isAllComplete = progress &&
     progress.completed_modules >= progress.total_modules;
 
+  // Build breadcrumbs
+  const breadcrumbs: BreadcrumbItem[] = [
+    { label: "Dashboard", icon: "[◆]" },
+  ];
+
   return (
     <div class="container mx-auto py-8 px-4">
       <div class="max-w-screen-md mx-auto">
+        {/* Breadcrumbs */}
+        <Breadcrumbs items={breadcrumbs} />
+
         {/* Header */}
         <div class="text-center my-8">
           <h1 class="text-4xl font-bold text-vhs-white text-shadow-vhs-purple my-6 uppercase">
