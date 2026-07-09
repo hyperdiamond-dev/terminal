@@ -1,5 +1,6 @@
 import { useComputed, useSignal, useSignalEffect } from "@preact/signals";
 import type { FileUploadMeta, Question } from "../lib/api.ts";
+import Skeleton from "../components/Skeleton.tsx";
 
 interface FileUploadQuestionProps {
   question: Question;
@@ -231,8 +232,19 @@ export default function FileUploadQuestion({
 
   if (isLoading.value) {
     return (
-      <div class="my-6">
-        <p class="text-t-text-muted text-sm">&gt; LOADING UPLOADS...</p>
+      <div class="my-6 space-y-2">
+        {[0, 1].map((i) => (
+          <div
+            key={i}
+            class="border-2 border-t-border bg-t-surface flex items-center gap-3 px-4 py-3"
+          >
+            <Skeleton className="w-8 h-8 shrink-0" />
+            <div class="min-w-0 flex-1 space-y-2">
+              <Skeleton className="h-3 w-1/2" />
+              <Skeleton className="h-2 w-16" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }

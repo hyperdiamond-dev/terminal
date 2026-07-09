@@ -18,12 +18,19 @@
  */
 import { useEffect, useRef } from "preact/hooks";
 import { useComputed, useSignal } from "@preact/signals";
+import Skeleton from "../components/Skeleton.tsx";
 
 interface AudioPlayerProps {
   url: string;
   title?: string | null;
   duration?: number;
 }
+
+// Static placeholder bar heights shown while the real waveform loads
+const WAVEFORM_SKELETON_HEIGHTS = Array.from(
+  { length: 40 },
+  (_, i) => 20 + Math.abs(Math.sin(i * 0.7)) * 60,
+);
 
 export default function AudioPlayer({
   url,
@@ -32,9 +39,11 @@ export default function AudioPlayer({
 }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const waveformContainerRef = useRef<HTMLDivElement>(null);
+  const speedMenuRef = useRef<HTMLDivElement>(null);
 
   // State signals
   const isPlaying = useSignal(false);
+  const isSpeedMenuOpen = useSignal(false);
   const isMuted = useSignal(false);
   const volume = useSignal(1);
   const currentTime = useSignal(0);
@@ -312,6 +321,29 @@ export default function AudioPlayer({
     return () => globalThis.removeEventListener("keydown", handleKeyDown);
   }, [volume.value]);
 
+  // Close speed menu on outside click/tap
+  useEffect(() => {
+    if (!isSpeedMenuOpen.value) return;
+
+    const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
+      if (
+        speedMenuRef.current && !speedMenuRef.current.contains(e.target as Node)
+      ) {
+        isSpeedMenuOpen.value = false;
+      }
+    };
+
+    globalThis.document?.addEventListener("click", handleOutsideClick);
+    globalThis.document?.addEventListener("touchstart", handleOutsideClick);
+    return () => {
+      globalThis.document?.removeEventListener("click", handleOutsideClick);
+      globalThis.document?.removeEventListener(
+        "touchstart",
+        handleOutsideClick,
+      );
+    };
+  }, [isSpeedMenuOpen.value]);
+
   // Handle waveform click to seek
   function handleWaveformClick(e: MouseEvent) {
     const container = e.currentTarget as HTMLElement;
@@ -354,9 +386,16 @@ export default function AudioPlayer({
       <div className="relative bg-decay-void-soft p-4">
         {isLoading.value
           ? (
-            <div className="h-32 flex items-center justify-center">
-              <div className="text-t-accent text-xs animate-pulse">
-                &gt; ANALYZING AUDIO DATA...
+            <div className="relative h-32">
+              <Skeleton className="absolute inset-0" />
+              <div className="absolute inset-0 flex items-center gap-[2px] px-1">
+                {WAVEFORM_SKELETON_HEIGHTS.map((height, index) => (
+                  <div
+                    key={index}
+                    className="flex-1 min-w-[2px] bg-t-border/60"
+                    style={{ height: `${height}%` }}
+                  />
+                ))}
               </div>
             </div>
           )
@@ -429,7 +468,7 @@ export default function AudioPlayer({
 
       {/* Control Panel */}
       <div className="border-t-2 border-t-border bg-decay-ash px-4 py-3">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           {/* Left Controls: Play/Pause */}
           <div className="flex items-center gap-3">
             <button
@@ -504,19 +543,33 @@ export default function AudioPlayer({
           </div>
 
           {/* Right Controls: Playback Speed */}
-          <div className="relative group/speed">
+          <div className="relative" ref={speedMenuRef}>
             <button
               type="button"
+              onClick={() => {
+                isSpeedMenuOpen.value = !isSpeedMenuOpen.value;
+              }}
               className="px-3 py-1 border-2 border-t-border bg-decay-void hover:border-t-accent text-t-accent hover:text-t-accent-secondary text-xs transition-colors"
+              aria-haspopup="true"
+              aria-expanded={isSpeedMenuOpen.value}
             >
               {playbackRate.value}x
             </button>
-            <div className="absolute bottom-full right-0 mb-2 bg-decay-ash border-2 border-t-border opacity-0 group-hover/speed:opacity-100 transition-opacity pointer-events-none group-hover/speed:pointer-events-auto z-10 shadow-void-deep">
+            <div
+              className={`absolute bottom-full right-0 mb-2 bg-decay-ash border-2 border-t-border transition-opacity z-10 shadow-void-deep ${
+                isSpeedMenuOpen.value
+                  ? "opacity-100 pointer-events-auto"
+                  : "opacity-0 pointer-events-none"
+              }`}
+            >
               {playbackRates.map((rate) => (
                 <button
                   type="button"
                   key={rate}
-                  onClick={() => changePlaybackRate(rate)}
+                  onClick={() => {
+                    changePlaybackRate(rate);
+                    isSpeedMenuOpen.value = false;
+                  }}
                   className={`block w-full px-4 py-2 text-xs text-left transition-colors ${
                     playbackRate.value === rate
                       ? "bg-t-accent text-black font-bold"

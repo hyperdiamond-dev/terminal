@@ -1,6 +1,7 @@
 import { useComputed, useSignal } from "@preact/signals";
 import { useEffect } from "preact/hooks";
 import type { ContentItem } from "../lib/api.ts";
+import Skeleton from "../components/Skeleton.tsx";
 
 interface ImageGalleryProps {
   images: ContentItem[];
@@ -135,14 +136,22 @@ export default function ImageGallery({ images }: ImageGalleryProps) {
               class="group relative overflow-hidden border-2 border-t-border bg-t-surface hover:border-t-accent transition-colors focus:outline-none focus:ring-2 focus:ring-t-accent focus:ring-offset-2 focus:ring-offset-black"
               aria-label={`Open image ${index + 1}: ${altText}`}
             >
+              {!loadedImages.value.has(index) && (
+                <Skeleton className="absolute inset-0" />
+              )}
               <img
                 src={item.url}
                 alt={altText}
                 loading="lazy"
-                class="w-full h-48 object-cover transition-transform group-hover:scale-105"
+                onLoad={() => {
+                  loadedImages.value = new Set([...loadedImages.value, index]);
+                }}
+                class={`w-full h-48 object-cover transition-all group-hover:scale-105 ${
+                  loadedImages.value.has(index) ? "opacity-100" : "opacity-0"
+                }`}
               />
               <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                <span class="text-t-accent opacity-0 group-hover:opacity-100 transition-opacity text-2xl font-mono">
+                <span class="hover-reveal text-t-accent opacity-0 group-hover:opacity-100 transition-opacity text-2xl font-mono">
                   [ VIEW ]
                 </span>
               </div>

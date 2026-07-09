@@ -206,7 +206,7 @@ export default function Dashboard({ data }: PageProps<DashboardData>) {
 
         {/* User Info Card */}
         <div class="border-2 border-vhs-gray-dark bg-decay-smoke/30 p-6 my-6">
-          <div class="grid grid-cols-2 gap-4 text-sm">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div>
               <p class="text-vhs-gray">&gt; USER ID</p>
               <p class="text-vhs-white font-mono">{user?.username}</p>

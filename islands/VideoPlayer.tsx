@@ -1,5 +1,6 @@
 import { useComputed, useSignal } from "@preact/signals";
 import { useEffect, useRef } from "preact/hooks";
+import Skeleton from "../components/Skeleton.tsx";
 
 interface VideoPlayerProps {
   src: string;
@@ -382,6 +383,7 @@ export default function VideoPlayer({
       onMouseEnter={() => {
         showControls.value = true;
       }}
+      onTouchStart={resetControlsTimeout}
       tabIndex={0}
       role="region"
       aria-label="Video player"
@@ -432,14 +434,8 @@ export default function VideoPlayer({
           </div>
         )}
 
-        {/* Loading Indicator */}
-        {isLoading.value && (
-          <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-80">
-            <div class="text-t-text-muted text-sm font-mono uppercase animate-pulse">
-              &gt; LOADING VIDEO...
-            </div>
-          </div>
-        )}
+        {/* Loading Skeleton */}
+        {isLoading.value && <Skeleton className="absolute inset-0" />}
       </div>
 
       {/* VHS-Style Controls */}
@@ -463,12 +459,12 @@ export default function VideoPlayer({
             style={{ width: `${progress.value}%` }}
           >
             {/* Progress handle */}
-            <div class="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-t-accent border border-t-border opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div class="hover-reveal absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-t-accent border border-t-border opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
         </div>
 
         {/* Control Buttons */}
-        <div class="flex items-center gap-2 p-3 border-t-2 border-t-border bg-t-surface">
+        <div class="flex flex-wrap items-center gap-2 p-3 border-t-2 border-t-border bg-t-surface">
           {/* Play/Pause */}
           <button
             type="button"
@@ -563,7 +559,7 @@ export default function VideoPlayer({
 
         {/* Keyboard Shortcuts Hint */}
         {!isPlaying.value && (
-          <div class="px-3 pb-2 text-t-text-muted text-xs font-mono">
+          <div class="hidden sm:block px-3 pb-2 text-t-text-muted text-xs font-mono">
             SHORTCUTS: SPACE/K=Play • ←→=Seek • ↑↓=Volume • M=Mute •
             F=Fullscreen • 0-9=Jump
           </div>

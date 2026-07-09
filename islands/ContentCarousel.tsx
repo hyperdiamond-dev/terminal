@@ -16,6 +16,7 @@ import { useEffect, useRef } from "preact/hooks";
 import VideoPlayer from "./VideoPlayer.tsx";
 import AudioPlayer from "./AudioPlayer.tsx";
 import type { ContentItem } from "../lib/api.ts";
+import Skeleton from "../components/Skeleton.tsx";
 
 interface ContentCarouselProps {
   content: ContentItem[];
@@ -64,6 +65,7 @@ export default function ContentCarousel({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const autoAdvanceTimerRef = useRef<number | null>(null);
+  const loadedImageIds = useSignal<Set<number>>(new Set());
 
   // Computed values
   const currentItem = useComputed(() => sortedContent[currentIndex.value]);
@@ -178,6 +180,12 @@ export default function ContentCarousel({
     isPaused.value = false;
   };
 
+  // Touch devices have no hover state — pause on touch and resume shortly
+  // after the touch ends so a reader isn't yanked to the next item mid-tap.
+  const handleTouchEnd = () => {
+    setTimeout(handleMouseLeave, 3000);
+  };
+
   if (totalItems === 0) return null;
 
   const item = currentItem.value;
@@ -188,6 +196,8 @@ export default function ContentCarousel({
       class="border-2 border-t-border bg-t-surface p-4"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onTouchStart={handleMouseEnter}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Header with title and position */}
       <div class="flex items-start justify-between mb-4">
@@ -285,12 +295,27 @@ export default function ContentCarousel({
 
         {item.content_type === "image" && (
           <div class="border-2 border-t-border overflow-hidden bg-decay-void">
-            <img
-              src={item.url}
-              alt={item.title || "Content image"}
-              class="w-full h-auto object-contain max-h-[600px]"
-              loading="lazy"
-            />
+            <div class="relative">
+              {!loadedImageIds.value.has(item.id) && (
+                <Skeleton className="absolute inset-0 h-[400px]" />
+              )}
+              <img
+                src={item.url}
+                alt={item.title || "Content image"}
+                class={`w-full h-auto object-contain max-h-[600px] transition-opacity ${
+                  loadedImageIds.value.has(item.id)
+                    ? "opacity-100"
+                    : "opacity-0"
+                }`}
+                loading="lazy"
+                onLoad={() => {
+                  loadedImageIds.value = new Set([
+                    ...loadedImageIds.value,
+                    item.id,
+                  ]);
+                }}
+              />
+            </div>
             {(item.title || item.description) && (
               <div class="p-4 border-t-2 border-t-border bg-t-surface">
                 {item.title && (

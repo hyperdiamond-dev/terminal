@@ -38,7 +38,7 @@ export default function App({ Component, url, state }: PageProps) {
   }
 
   // Extract module name from URL if present
-  const moduleMatch = currentPath.match(/\/module\/([^\/]+)/);
+  const moduleMatch = currentPath.match(/\/modules\/([^\/]+)/);
   const moduleName = moduleMatch ? moduleMatch[1].toUpperCase() : null;
 
   return (
