@@ -1,7 +1,6 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
+import { API_BASE_URL } from "../lib/api.ts";
 import { getAuthToken } from "../lib/cookies.ts";
-
-const API_BASE_URL = Deno.env.get("API_BASE_URL") || "http://localhost:8000";
 
 interface ConsentVersion {
   version: string;
@@ -45,7 +44,11 @@ export const handler: Handlers<ConsentData> = {
       );
 
       if (!versionResponse.ok) {
-        throw new Error("Failed to fetch consent version");
+        const body = await versionResponse.json().catch(() => null);
+        throw new Error(
+          `Failed to fetch consent version (HTTP ${versionResponse.status})` +
+            (body?.error ? `: ${body.error}` : ""),
+        );
       }
 
       const consentVersion: ConsentVersion = await versionResponse.json();

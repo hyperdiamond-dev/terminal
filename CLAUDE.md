@@ -13,6 +13,9 @@ deno task preview    # Run production build
 deno task manifest   # Regenerate Fresh manifest (fresh.gen.ts)
 ```
 
+**Known issue:** `deno task check` currently fails on `node_modules/tailwindcss`
+(pre-existing). Use targeted `deno check <files>` instead.
+
 ## Architecture Overview
 
 **Stack:** Fresh 1.7.3, Deno, Preact 10.22.0, Preact Signals, Tailwind CSS
@@ -36,19 +39,33 @@ deno task manifest   # Regenerate Fresh manifest (fresh.gen.ts)
 - `components/` are server-rendered only (zero JavaScript)
 - Fresh only ships JavaScript for islands, minimizing bundle size
 
+**Islands (15):** question renderers (`QuestionRenderer`, `TrueFalseQuestion`,
+`MultipleChoiceQuestion`, `CheckboxMultiSelectQuestion`, `FillBlankQuestion`,
+`FreeFormQuestion`, `NoteQuestion`, `FileUploadQuestion`), questionnaires
+(`ModuleQuestionnaire`, `SubmoduleQuestionnaire`), media (`VideoPlayer`,
+`AudioPlayer`, `ImageGallery`, `ContentCarousel`), and `MobileMenu`.
+
+**Components:** `MediaContent`, `Breadcrumbs`, `Header`, `Button`, `Skeleton`.
+
 ## Routes
 
-| Route           | File               | Purpose                            |
-| --------------- | ------------------ | ---------------------------------- |
-| `/`             | `index.tsx`        | Landing page                       |
-| `/new-user`     | `new-user.tsx`     | Anonymous user creation (GET/POST) |
-| `/consent`      | `consent.tsx`      | Informed consent form              |
-| `/dashboard`    | `dashboard.tsx`    | User session dashboard             |
-| `/greet/[name]` | `greet/[name].tsx` | Dynamic route example              |
-| `/api/joke`     | `api/joke.ts`      | API endpoint example               |
+| Route                        | File                             | Purpose                            |
+| ---------------------------- | -------------------------------- | ---------------------------------- |
+| `/`                          | `index.tsx`                      | Landing page                       |
+| `/new-user`                  | `new-user.tsx`                   | Anonymous user creation (GET/POST) |
+| `/login`                     | `login.tsx`                      | Login form                         |
+| `/logout`                    | `logout.tsx`                     | Session logout                     |
+| `/consent`                   | `consent.tsx`                    | Informed consent form              |
+| `/dashboard`                 | `dashboard.tsx`                  | User session dashboard             |
+| `/modules`                   | `modules/index.tsx`              | Module overview                    |
+| `/modules/[name]`            | `modules/[name].tsx`             | Module page                        |
+| `/modules/[name]/review`     | `modules/[name]/review.tsx`      | Read-only review of completed      |
+| `/modules/[name]/[submodule]`| `modules/[name]/[submodule].tsx` | Submodule page                     |
+
+Special files: `_app.tsx` (layout + theme injection), `_404.tsx`.
 
 **Layout:** `_app.tsx` applies visual effects (grain, CRT vignette, glitch)
-based on page type.
+based on page type and injects theme CSS variables.
 
 ## API Client (lib/api.ts)
 
@@ -58,7 +75,7 @@ Type-safe client for the Utopia backend API.
 import { api } from "../lib/api.ts";
 
 api.setToken(authToken); // Set auth token
-const user = await api.getCurrentUser(); // Get current user
+const profile = await api.getProfile(); // Get current user profile
 const modules = await api.getModules(); // List modules
 await api.startModule("module1"); // Start a module
 await api.submitResponse(questionId, value); // Submit response
@@ -66,17 +83,23 @@ await api.submitResponse(questionId, value); // Submit response
 
 **Key Methods:**
 
-- Auth: `createAnonymousUser()`, `login()`, `getCurrentUser()`
-- Modules: `getModules()`, `getCurrentModule()`, `startModule()`,
-  `completeModule()`
+- Token: `setToken()`, `clearToken()`
+- Auth: `createAnonymousUser()`, `login()`, `getProfile()`
+- Modules: `getModules()`, `getCurrentModule()`, `getModule()`,
+  `startModule()`, `completeModule()`
 - Submodules: `getSubmodule()`, `startSubmodule()`, `completeSubmodule()`
 - Questions: `getModuleQuestions()`, `getSubmoduleQuestions()`,
-  `submitResponse()`, `submitBatchResponses()`
+  `getQuestion()`, `submitResponse()`, `submitBatchResponses()`,
+  `getResponse()`
+- Content: `getModuleContent()`, `getSubmoduleContent()`
+
+There is no file-upload method on the client; the `FileUploadQuestion` island
+handles uploads directly.
 
 **Configuration:** `API_BASE_URL` environment variable (default:
-`http://localhost:8000`)
+`http://localhost:3001`)
 
-## Visual Effects
+## Visual Effects & Theming
 
 Custom VHS/retro aesthetic defined in `static/styles.css` and
 `tailwind.config.ts`:
@@ -86,10 +109,24 @@ Custom VHS/retro aesthetic defined in `static/styles.css` and
 - Chromatic aberration (red/blue color shifts)
 - Glitch effect (animated text distortion on hover)
 
+**Data-Driven Themes:**
+
+- `lib/themes.ts` fetches themes from the backend (`GET /api/themes`) with a
+  5-minute in-memory cache; `DEFAULT_THEME` is a hardcoded fallback
+  (`id: "vhs"`, "VHS Static")
+- Theme CSS variables (`--theme-*`) are injected as inline styles by
+  `_app.tsx`; defaults live on `:root` in `static/styles.css`
+- Theme-specific effect overrides in `static/styles.css`:
+  `.theme-poolrooms`, `.theme-redrooms`, `.theme-void`, `.theme-yellow`
+
 **Tailwind Theme Extensions:**
 
-- Custom colors: `analog-*` (red, blue, purple, cyan), `decay-*` (void, ash,
-  smoke, dust)
+- Theme-aware `t-*` token namespace mapped to `--theme-*` CSS vars: `t-bg`,
+  `t-text`, `t-text-dim`, `t-text-muted`, `t-accent`, `t-accent-dim`,
+  `t-accent-secondary`, `t-surface`, `t-surface-light`, `t-border`, plus
+  `shadow-t-glow`
+- Static colors: `analog-*` (red, blue, purple, cyan), `decay-*` (void, ash,
+  smoke, dust), `vhs-*`
 - Custom shadows: `vhs-*` glow effects
 - Font: JetBrains Mono
 
@@ -106,4 +143,5 @@ count.value++; // Triggers re-render
 
 ## Environment Variables
 
-- `API_BASE_URL` - Backend API URL (default: `http://localhost:8000`)
+- `API_BASE_URL` - Backend API URL (default: `http://localhost:3001`)
+- `PUBLIC_API_BASE_URL` - Browser-facing API URL (defaults to `API_BASE_URL`)

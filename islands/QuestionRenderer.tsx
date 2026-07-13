@@ -1,4 +1,5 @@
 import type { Question } from "../lib/api.ts";
+import CheckboxMultiSelectQuestion from "./CheckboxMultiSelectQuestion.tsx";
 import MultipleChoiceQuestion from "./MultipleChoiceQuestion.tsx";
 import TrueFalseQuestion from "./TrueFalseQuestion.tsx";
 import FillBlankQuestion from "./FillBlankQuestion.tsx";
@@ -36,6 +37,16 @@ export default function QuestionRenderer({
           question={question}
           onAnswer={handleAnswer as (value: string | string[]) => void}
           value={value as string | string[] | undefined}
+          disabled={disabled}
+        />
+      );
+
+    case "checkbox_multi_select":
+      return (
+        <CheckboxMultiSelectQuestion
+          question={question}
+          onAnswer={handleAnswer as (value: string[]) => void}
+          value={value as string[] | undefined}
           disabled={disabled}
         />
       );

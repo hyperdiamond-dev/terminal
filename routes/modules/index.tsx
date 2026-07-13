@@ -1,6 +1,6 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
 import Breadcrumbs, { BreadcrumbItem } from "../../components/Breadcrumbs.tsx";
-import { api } from "../../lib/api.ts";
+import { api, API_BASE_URL } from "../../lib/api.ts";
 import { getAuthToken } from "../../lib/cookies.ts";
 
 interface ModuleOverview {
@@ -44,9 +44,7 @@ export const handler: Handlers<ModulesData> = {
 
       // Fetch module overview from API
       const response = await fetch(
-        `${
-          Deno.env.get("API_BASE_URL") || "http://localhost:8000"
-        }/api/modules`,
+        `${API_BASE_URL}/api/modules`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`,

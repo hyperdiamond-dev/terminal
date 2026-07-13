@@ -1,3 +1,5 @@
+import { API_BASE_URL } from "./api.ts";
+
 export interface ThemeConfig {
   id: string;
   label: string;
@@ -13,8 +15,6 @@ const DEFAULT_THEME: ThemeConfig = {
   cssVars: {},
   effects: "effect-grain effect-crt-vignette effect-chromatic",
 };
-
-const API_BASE_URL = Deno.env.get("API_BASE_URL") || "http://localhost:8000";
 
 // In-memory cache with TTL
 let themesCache: ThemeConfig[] | null = null;

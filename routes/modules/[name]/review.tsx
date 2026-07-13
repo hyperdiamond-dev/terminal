@@ -1,12 +1,19 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
 import QuestionRenderer from "../../../islands/QuestionRenderer.tsx";
+import { API_BASE_URL, PUBLIC_API_BASE_URL } from "../../../lib/api.ts";
 import { getAuthToken } from "../../../lib/cookies.ts";
 import { getTheme } from "../../../lib/themes.ts";
 
 interface QuestionInfo {
   id: number;
   question_text: string;
-  question_type: "true_false" | "multiple_choice" | "fill_blank" | "free_form";
+  question_type:
+    | "true_false"
+    | "multiple_choice"
+    | "fill_blank"
+    | "free_form"
+    | "file_upload"
+    | "note";
   sequence_order: number;
   is_required: boolean;
   metadata: Record<string, unknown>;
@@ -30,9 +37,9 @@ interface ReviewData {
   questions?: QuestionInfo[];
   completed_at?: string;
   error?: string;
+  authToken?: string;
+  apiBaseUrl?: string;
 }
-
-const API_BASE_URL = Deno.env.get("API_BASE_URL") || "http://localhost:8000";
 
 export const handler: Handlers<ReviewData> = {
   async GET(req, ctx) {
@@ -106,7 +113,7 @@ export const handler: Handlers<ReviewData> = {
 
       // Fetch questions
       const questionsResponse = await fetch(
-        `${API_BASE_URL}/api/questions/modules/${moduleName}/questions`,
+        `${API_BASE_URL}/api/modules/${moduleName}/questions`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`,
@@ -127,6 +134,8 @@ export const handler: Handlers<ReviewData> = {
         responses,
         questions,
         completed_at: completedAt,
+        authToken,
+        apiBaseUrl: PUBLIC_API_BASE_URL,
       });
     } catch (error) {
       return ctx.render({
@@ -242,6 +251,8 @@ export default function ReviewPage({ data }: PageProps<ReviewData>) {
                           | boolean
                           | undefined}
                         disabled
+                        authToken={data.authToken}
+                        apiBaseUrl={data.apiBaseUrl}
                       />
                     </div>
                   ))}

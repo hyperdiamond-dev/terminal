@@ -4,7 +4,14 @@
  * This module provides a type-safe client for interacting with the Utopia research platform API.
  */
 
-const API_BASE_URL = Deno.env.get("API_BASE_URL") || "http://localhost:8000";
+export const API_BASE_URL = Deno.env.get("API_BASE_URL") ||
+  "http://localhost:3001";
+
+// Browser-facing API URL, passed to islands for client-side fetches. Needed
+// when the server-side URL is not reachable from the browser (e.g. Docker
+// service hostnames like http://utopia:3001).
+export const PUBLIC_API_BASE_URL = Deno.env.get("PUBLIC_API_BASE_URL") ||
+  API_BASE_URL;
 
 export interface ApiError {
   error: string;
@@ -12,15 +19,23 @@ export interface ApiError {
 }
 
 export interface User {
-  id: string;
-  username: string;
-  role: string;
-  created_at: string;
+  uuid: string;
+  friendlyAlias: string;
+  firebaseUid?: string;
+}
+
+export interface ProfileResponse {
+  message: string;
+  user: User;
 }
 
 export interface LoginResponse {
+  success: boolean;
   token: string;
-  user: User;
+  user: {
+    uuid: string;
+    username: string;
+  };
 }
 
 export interface AnonymousUserResponse {
@@ -35,8 +50,8 @@ export interface AnonymousUserResponse {
 export interface Module {
   id: number;
   name: string;
-  display_name: string;
-  description: string;
+  title: string;
+  description: string | null;
   sequence_order: number;
   is_required: boolean;
   status?: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
@@ -45,8 +60,8 @@ export interface Module {
 export interface Submodule {
   id: number;
   name: string;
-  display_name: string;
-  description: string;
+  title: string;
+  description: string | null;
   sequence_order: number;
   is_required: boolean;
   status?: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
@@ -58,6 +73,7 @@ export interface Question {
   question_type:
     | "true_false"
     | "multiple_choice"
+    | "checkbox_multi_select"
     | "fill_blank"
     | "free_form"
     | "file_upload"
@@ -65,6 +81,17 @@ export interface Question {
   is_required: boolean;
   sequence_order: number;
   metadata: Record<string, unknown>;
+}
+
+export interface QuestionWithResponse extends Question {
+  user_response: {
+    response_value: string;
+    answered_at: string;
+  } | null;
+}
+
+export interface QuestionListResponse {
+  questions: QuestionWithResponse[];
 }
 
 export interface FileUploadMeta {
@@ -138,7 +165,7 @@ class ApiClient {
       const error: ApiError = await response.json().catch(() => ({
         error: "An unknown error occurred",
       }));
-      throw new Error(error.error);
+      throw new Error(`${error.error} (HTTP ${response.status})`);
     }
 
     return response.json();
@@ -146,23 +173,29 @@ class ApiClient {
 
   // Auth endpoints
   // deno-lint-ignore require-await
-  async createAnonymousUser(): Promise<AnonymousUserResponse> {
+  async createAnonymousUser(clientIp?: string): Promise<AnonymousUserResponse> {
     return this.request<AnonymousUserResponse>("/api/auth/create-anonymous", {
       method: "POST",
+      headers: clientIp ? { "x-forwarded-for": clientIp } : undefined,
     });
   }
 
   // deno-lint-ignore require-await
-  async login(username: string, password: string): Promise<LoginResponse> {
+  async login(
+    username: string,
+    password: string,
+    clientIp?: string,
+  ): Promise<LoginResponse> {
     return this.request<LoginResponse>("/api/auth/login", {
       method: "POST",
       body: JSON.stringify({ username, password }),
+      headers: clientIp ? { "x-forwarded-for": clientIp } : undefined,
     });
   }
 
   // deno-lint-ignore require-await
-  async getCurrentUser(): Promise<User> {
-    return this.request<User>("/api/auth/user");
+  async getProfile(): Promise<ProfileResponse> {
+    return this.request<ProfileResponse>("/api/profile");
   }
 
   // Module endpoints
@@ -239,18 +272,22 @@ class ApiClient {
   }
 
   // Question endpoints
-  // deno-lint-ignore require-await
-  async getModuleQuestions(moduleName: string): Promise<Question[]> {
-    return this.request<Question[]>(
-      `/api/questions/modules/${moduleName}/questions`,
+  async getModuleQuestions(
+    moduleName: string,
+  ): Promise<QuestionWithResponse[]> {
+    const response = await this.request<QuestionListResponse>(
+      `/api/modules/${moduleName}/questions`,
     );
+    return response.questions || [];
   }
 
-  // deno-lint-ignore require-await
-  async getSubmoduleQuestions(submoduleName: string): Promise<Question[]> {
-    return this.request<Question[]>(
-      `/api/questions/submodules/${submoduleName}/questions`,
+  async getSubmoduleQuestions(
+    submoduleName: string,
+  ): Promise<QuestionWithResponse[]> {
+    const response = await this.request<QuestionListResponse>(
+      `/api/submodules/${submoduleName}/questions`,
     );
+    return response.questions || [];
   }
 
   // deno-lint-ignore require-await

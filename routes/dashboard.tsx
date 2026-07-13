@@ -1,13 +1,11 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
 import Breadcrumbs, { BreadcrumbItem } from "../components/Breadcrumbs.tsx";
+import { API_BASE_URL } from "../lib/api.ts";
 import { getAuthToken } from "../lib/cookies.ts";
 
-const API_BASE_URL = Deno.env.get("API_BASE_URL") || "http://localhost:8000";
-
 interface User {
-  id: string;
-  username: string;
-  role: string;
+  uuid: string;
+  friendlyAlias: string;
 }
 
 interface ProgressStats {
@@ -48,7 +46,7 @@ export const handler: Handlers<DashboardData> = {
 
     try {
       // Fetch user info
-      const userResponse = await fetch(`${API_BASE_URL}/api/auth/user`, {
+      const userResponse = await fetch(`${API_BASE_URL}/api/profile`, {
         headers: {
           Authorization: `Bearer ${authToken}`,
           "Content-Type": "application/json",
@@ -62,10 +60,15 @@ export const handler: Handlers<DashboardData> = {
             headers: { Location: "/" },
           });
         }
-        throw new Error("Failed to fetch user info");
+        const body = await userResponse.json().catch(() => null);
+        throw new Error(
+          `Failed to fetch user info (HTTP ${userResponse.status})` +
+            (body?.error ? `: ${body.error}` : ""),
+        );
       }
 
-      const user: User = await userResponse.json();
+      const profile: { user: User } = await userResponse.json();
+      const user: User = profile.user;
 
       // Fetch consent status
       const consentResponse = await fetch(
@@ -209,7 +212,7 @@ export default function Dashboard({ data }: PageProps<DashboardData>) {
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div>
               <p class="text-vhs-gray">&gt; USER ID</p>
-              <p class="text-vhs-white font-mono">{user?.username}</p>
+              <p class="text-vhs-white font-mono">{user?.friendlyAlias}</p>
             </div>
             <div>
               <p class="text-vhs-gray">&gt; STATUS</p>

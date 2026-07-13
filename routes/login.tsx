@@ -22,7 +22,7 @@ export const handler: Handlers<LoginData> = {
     return ctx.render({ error: error || undefined });
   },
 
-  async POST(req, _ctx) {
+  async POST(req, ctx) {
     try {
       const formData = await req.formData();
       const username = formData.get("username") as string;
@@ -38,7 +38,11 @@ export const handler: Handlers<LoginData> = {
         });
       }
 
-      const loginResponse = await api.login(username, password);
+      const loginResponse = await api.login(
+        username,
+        password,
+        ctx.remoteAddr.hostname,
+      );
 
       const headers = new Headers();
       headers.set("Location", "/dashboard");
@@ -46,7 +50,7 @@ export const handler: Handlers<LoginData> = {
       setCookie(headers, {
         name: "auth_token",
         value: loginResponse.token,
-        maxAge: 60 * 60 * 24 * 7, // 7 days
+        maxAge: 60 * 60 * 24 * 30, // 30 days (matches backend JWT expiry)
         sameSite: "Lax",
         path: "/",
         secure: Deno.env.get("DENO_ENV") === "production",

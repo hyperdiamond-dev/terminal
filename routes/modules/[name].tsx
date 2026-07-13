@@ -4,7 +4,11 @@ import MediaContent from "../../components/MediaContent.tsx";
 import Breadcrumbs, { BreadcrumbItem } from "../../components/Breadcrumbs.tsx";
 import { getAuthToken } from "../../lib/cookies.ts";
 import { getTheme } from "../../lib/themes.ts";
-import type { ContentItem } from "../../lib/api.ts";
+import {
+  API_BASE_URL,
+  type ContentItem,
+  PUBLIC_API_BASE_URL,
+} from "../../lib/api.ts";
 
 interface ModuleProgress {
   status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
@@ -31,7 +35,13 @@ interface SubmoduleInfo {
 interface QuestionInfo {
   id: number;
   question_text: string;
-  question_type: "true_false" | "multiple_choice" | "fill_blank" | "free_form";
+  question_type:
+    | "true_false"
+    | "multiple_choice"
+    | "fill_blank"
+    | "free_form"
+    | "file_upload"
+    | "note";
   sequence_order: number;
   is_required: boolean;
   metadata: Record<string, unknown>;
@@ -61,8 +71,6 @@ interface ModuleData {
   authToken?: string;
   apiBaseUrl?: string;
 }
-
-const API_BASE_URL = Deno.env.get("API_BASE_URL") || "http://localhost:8000";
 
 export const handler: Handlers<ModuleData> = {
   async GET(req, ctx) {
@@ -147,7 +155,7 @@ export const handler: Handlers<ModuleData> = {
       let questions: QuestionInfo[] = [];
       if (submodules.length === 0) {
         const questionsResponse = await fetch(
-          `${API_BASE_URL}/api/questions/modules/${name}/questions`,
+          `${API_BASE_URL}/api/modules/${name}/questions`,
           {
             headers: {
               Authorization: `Bearer ${authToken}`,
@@ -173,7 +181,7 @@ export const handler: Handlers<ModuleData> = {
         questions,
         content,
         authToken,
-        apiBaseUrl: API_BASE_URL,
+        apiBaseUrl: PUBLIC_API_BASE_URL,
       });
     } catch (error) {
       return ctx.render({

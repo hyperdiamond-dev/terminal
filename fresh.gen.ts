@@ -15,6 +15,7 @@ import * as $modules_name_review from "./routes/modules/[name]/review.tsx";
 import * as $modules_index from "./routes/modules/index.tsx";
 import * as $new_user from "./routes/new-user.tsx";
 import * as $AudioPlayer from "./islands/AudioPlayer.tsx";
+import * as $CheckboxMultiSelectQuestion from "./islands/CheckboxMultiSelectQuestion.tsx";
 import * as $ContentCarousel from "./islands/ContentCarousel.tsx";
 import * as $FileUploadQuestion from "./islands/FileUploadQuestion.tsx";
 import * as $FillBlankQuestion from "./islands/FillBlankQuestion.tsx";
@@ -47,6 +48,7 @@ const manifest = {
   },
   islands: {
     "./islands/AudioPlayer.tsx": $AudioPlayer,
+    "./islands/CheckboxMultiSelectQuestion.tsx": $CheckboxMultiSelectQuestion,
     "./islands/ContentCarousel.tsx": $ContentCarousel,
     "./islands/FileUploadQuestion.tsx": $FileUploadQuestion,
     "./islands/FillBlankQuestion.tsx": $FillBlankQuestion,

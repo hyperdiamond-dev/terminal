@@ -13,8 +13,11 @@ interface NewUserData {
 export const handler: Handlers<NewUserData> = {
   async GET(_req, ctx) {
     try {
-      // Create anonymous user via API
-      const response = await api.createAnonymousUser();
+      // Create anonymous user via API, forwarding the client IP so the
+      // backend rate-limits per participant instead of per frontend server
+      const response = await api.createAnonymousUser(
+        ctx.remoteAddr.hostname,
+      );
 
       // Render page with credentials
       return ctx.render({
@@ -28,7 +31,7 @@ export const handler: Handlers<NewUserData> = {
     }
   },
 
-  async POST(req, _ctx) {
+  async POST(req, ctx) {
     try {
       // Parse form data to get credentials
       const formData = await req.formData();
@@ -36,7 +39,11 @@ export const handler: Handlers<NewUserData> = {
       const password = formData.get("password") as string;
 
       // Login user via API
-      const loginResponse = await api.login(username, password);
+      const loginResponse = await api.login(
+        username,
+        password,
+        ctx.remoteAddr.hostname,
+      );
 
       // Create response with redirect
       const headers = new Headers();
@@ -46,7 +53,7 @@ export const handler: Handlers<NewUserData> = {
       setCookie(headers, {
         name: "auth_token",
         value: loginResponse.token,
-        maxAge: 60 * 60 * 24 * 7, // 7 days
+        maxAge: 60 * 60 * 24 * 30, // 30 days (matches backend JWT expiry)
         sameSite: "Lax",
         path: "/",
         secure: Deno.env.get("DENO_ENV") === "production",
