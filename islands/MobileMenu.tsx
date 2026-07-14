@@ -1,5 +1,5 @@
-import { signal } from "@preact/signals";
-import { useEffect } from "preact/hooks";
+import { useSignal } from "@preact/signals";
+import { useEffect, useRef } from "preact/hooks";
 
 interface MobileMenuProps {
   currentPath: string;
@@ -9,8 +9,11 @@ interface MobileMenuProps {
 export default function MobileMenu(
   { currentPath, moduleName }: MobileMenuProps,
 ) {
-  const isOpen = signal(false);
+  const isOpen = useSignal(false);
   const isHome = currentPath === "/";
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const navRef = useRef<HTMLElement>(null);
+  const wasOpened = useRef(false);
 
   // Close menu when route changes
   useEffect(() => {
@@ -31,13 +34,19 @@ export default function MobileMenu(
     }
   }, []);
 
-  // Prevent body scroll when menu is open
+  // Prevent body scroll when menu is open; move focus into the menu on
+  // open and back to the toggle on close
   useEffect(() => {
     if (typeof document !== "undefined") {
       if (isOpen.value) {
+        wasOpened.current = true;
         document.body.style.overflow = "hidden";
+        navRef.current?.querySelector<HTMLAnchorElement>("a")?.focus();
       } else {
         document.body.style.overflow = "";
+        if (wasOpened.current) {
+          toggleRef.current?.focus();
+        }
       }
     }
   }, [isOpen.value]);
@@ -55,6 +64,7 @@ export default function MobileMenu(
       {/* Hamburger Button */}
       <button
         type="button"
+        ref={toggleRef}
         class="site-header__menu-toggle"
         onClick={toggleMenu}
         aria-label="Toggle menu"
@@ -78,6 +88,7 @@ export default function MobileMenu(
       {/* Mobile Menu Panel */}
       <nav
         id="mobile-menu"
+        ref={navRef}
         class={`mobile-menu ${isOpen.value ? "mobile-menu--open" : ""}`}
         aria-label="Mobile navigation"
       >

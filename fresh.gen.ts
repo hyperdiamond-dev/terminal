@@ -3,7 +3,9 @@
 // This file is automatically updated during development when running `dev.ts`.
 
 import * as $_404 from "./routes/_404.tsx";
+import * as $_500 from "./routes/_500.tsx";
 import * as $_app from "./routes/_app.tsx";
+import * as $_middleware from "./routes/_middleware.ts";
 import * as $consent from "./routes/consent.tsx";
 import * as $dashboard from "./routes/dashboard.tsx";
 import * as $index from "./routes/index.tsx";
@@ -27,6 +29,7 @@ import * as $MultipleChoiceQuestion from "./islands/MultipleChoiceQuestion.tsx";
 import * as $NoteQuestion from "./islands/NoteQuestion.tsx";
 import * as $QuestionRenderer from "./islands/QuestionRenderer.tsx";
 import * as $SubmoduleQuestionnaire from "./islands/SubmoduleQuestionnaire.tsx";
+import * as $ThemeSwitcher from "./islands/ThemeSwitcher.tsx";
 import * as $TrueFalseQuestion from "./islands/TrueFalseQuestion.tsx";
 import * as $VideoPlayer from "./islands/VideoPlayer.tsx";
 import type { Manifest } from "$fresh/server.ts";
@@ -34,7 +37,9 @@ import type { Manifest } from "$fresh/server.ts";
 const manifest = {
   routes: {
     "./routes/_404.tsx": $_404,
+    "./routes/_500.tsx": $_500,
     "./routes/_app.tsx": $_app,
+    "./routes/_middleware.ts": $_middleware,
     "./routes/consent.tsx": $consent,
     "./routes/dashboard.tsx": $dashboard,
     "./routes/index.tsx": $index,
@@ -60,6 +65,7 @@ const manifest = {
     "./islands/NoteQuestion.tsx": $NoteQuestion,
     "./islands/QuestionRenderer.tsx": $QuestionRenderer,
     "./islands/SubmoduleQuestionnaire.tsx": $SubmoduleQuestionnaire,
+    "./islands/ThemeSwitcher.tsx": $ThemeSwitcher,
     "./islands/TrueFalseQuestion.tsx": $TrueFalseQuestion,
     "./islands/VideoPlayer.tsx": $VideoPlayer,
   },

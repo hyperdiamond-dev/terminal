@@ -1,6 +1,10 @@
 import { useComputed, useSignal } from "@preact/signals";
-import type { Question } from "../lib/api.ts";
+import { ApiError, apiRequest, type Question } from "../lib/api.ts";
 import QuestionRenderer from "./QuestionRenderer.tsx";
+
+const SESSION_EXPIRED_REDIRECT = `/login?error=${
+  encodeURIComponent("SESSION EXPIRED")
+}`;
 
 interface QuestionWithResponse extends Question {
   user_response: {
@@ -78,26 +82,20 @@ export default function SubmoduleQuestionnaire({
     error.value = null;
 
     try {
-      const response = await fetch(
-        `${apiBaseUrl}/api/modules/${moduleName}/submodules/${submoduleName}/start`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-            "Content-Type": "application/json",
-          },
-        },
+      await apiRequest(
+        apiBaseUrl,
+        `/api/modules/${moduleName}/submodules/${submoduleName}/start`,
+        { method: "POST", token: authToken },
       );
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to start section");
-      }
 
       isStarted.value = true;
       success.value = "SECTION STARTED SUCCESSFULLY";
       setTimeout(() => (success.value = null), 3000);
     } catch (err) {
+      if (err instanceof ApiError && err.isAuthError) {
+        location.href = SESSION_EXPIRED_REDIRECT;
+        return;
+      }
       error.value = err instanceof Error
         ? err.message
         : "Failed to start section";
@@ -111,26 +109,23 @@ export default function SubmoduleQuestionnaire({
     error.value = null;
 
     try {
-      const response = await fetch(
-        `${apiBaseUrl}/api/modules/${moduleName}/submodules/${submoduleName}/save`,
+      await apiRequest(
+        apiBaseUrl,
+        `/api/modules/${moduleName}/submodules/${submoduleName}/save`,
         {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ responses: responses.value }),
+          token: authToken,
+          body: { responses: responses.value },
         },
       );
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to save progress");
-      }
 
       success.value = "PROGRESS SAVED";
       setTimeout(() => (success.value = null), 3000);
     } catch (err) {
+      if (err instanceof ApiError && err.isAuthError) {
+        location.href = SESSION_EXPIRED_REDIRECT;
+        return;
+      }
       error.value = err instanceof Error
         ? err.message
         : "Failed to save progress";
@@ -146,27 +141,21 @@ export default function SubmoduleQuestionnaire({
     error.value = null;
 
     try {
-      const response = await fetch(
-        `${apiBaseUrl}/api/modules/${moduleName}/submodules/${submoduleName}/complete`,
+      const data = await apiRequest<{
+        unlocked_submodules?: { name: string }[];
+        module_completed?: boolean;
+      }>(
+        apiBaseUrl,
+        `/api/modules/${moduleName}/submodules/${submoduleName}/complete`,
         {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
+          token: authToken,
+          body: {
             responses: responses.value,
             metadata: { completed_from: "terminal_frontend" },
-          }),
+          },
         },
       );
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to complete section");
-      }
-
-      const data = await response.json();
 
       // Check if there's a next submodule or if module is complete
       if (data.unlocked_submodules && data.unlocked_submodules.length > 0) {
@@ -176,6 +165,10 @@ export default function SubmoduleQuestionnaire({
 
       showCompletion.value = true;
     } catch (err) {
+      if (err instanceof ApiError && err.isAuthError) {
+        location.href = SESSION_EXPIRED_REDIRECT;
+        return;
+      }
       error.value = err instanceof Error
         ? err.message
         : "Failed to complete section";
@@ -298,9 +291,14 @@ export default function SubmoduleQuestionnaire({
         </div>
 
         {error.value && (
-          <p class="text-t-accent text-shadow-t-accent mt-4">
-            &gt; ERROR: {error.value}
-          </p>
+          <div role="alert" class="mt-4">
+            <p class="text-t-accent text-shadow-t-accent">
+              &gt; ERROR: {error.value}
+            </p>
+            <p class="text-t-text-muted text-sm mt-1">
+              &gt; CHECK CONNECTION AND PRESS AGAIN
+            </p>
+          </div>
         )}
       </div>
     );
@@ -319,7 +317,14 @@ export default function SubmoduleQuestionnaire({
             {requiredAnswered.value} / {requiredCount.value} REQUIRED
           </p>
         </div>
-        <div class="w-full h-2 bg-t-border mt-2">
+        <div
+          class="w-full h-2 bg-t-border mt-2"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={questions.length}
+          aria-valuenow={answeredCount.value}
+          aria-label="Questions answered"
+        >
           <div
             class="h-full bg-t-accent transition-all duration-300"
             style={{
@@ -331,15 +336,24 @@ export default function SubmoduleQuestionnaire({
 
       {/* Messages */}
       {error.value && (
-        <div class="border-2 border-t-accent bg-t-accent/10 px-4 py-3 mb-6">
+        <div
+          role="alert"
+          class="border-2 border-t-accent bg-t-accent/10 px-4 py-3 mb-6"
+        >
           <p class="text-t-accent text-shadow-t-accent">
             &gt; ERROR: {error.value}
+          </p>
+          <p class="text-t-text-muted text-sm mt-1">
+            &gt; CHECK CONNECTION AND PRESS AGAIN
           </p>
         </div>
       )}
 
       {success.value && (
-        <div class="border-2 border-t-accent-secondary bg-t-accent-secondary/10 px-4 py-3 mb-6">
+        <div
+          role="status"
+          class="border-2 border-t-accent-secondary bg-t-accent-secondary/10 px-4 py-3 mb-6"
+        >
           <p class="text-t-accent-secondary">&gt; {success.value}</p>
         </div>
       )}

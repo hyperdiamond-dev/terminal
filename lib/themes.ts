@@ -9,12 +9,41 @@ export interface ThemeConfig {
 }
 
 // Default fallback theme when API is unreachable
-const DEFAULT_THEME: ThemeConfig = {
+export const DEFAULT_THEME: ThemeConfig = {
   id: "vhs",
   label: "VHS Static",
   cssVars: {},
   effects: "effect-grain effect-crt-vignette effect-chromatic",
 };
+
+// Mirrors the :root defaults in static/styles.css — keep in sync
+export const THEME_CSS_VAR_NAMES = [
+  "--theme-bg",
+  "--theme-text",
+  "--theme-text-dim",
+  "--theme-text-muted",
+  "--theme-accent",
+  "--theme-accent-dim",
+  "--theme-accent-secondary",
+  "--theme-surface",
+  "--theme-surface-light",
+  "--theme-border",
+  "--theme-glow",
+  "--theme-text-shadow",
+] as const;
+
+// Every effect class a theme may apply — keep in sync with static/styles.css
+export const ALL_EFFECT_CLASSES = [
+  "effect-grain",
+  "effect-grain-heavy",
+  "effect-crt-vignette",
+  "effect-chromatic",
+  "effect-glitch",
+] as const;
+
+// Heavy effects applied to pages when no theme has been chosen
+export const LEGACY_STATIC_EFFECTS =
+  "effect-grain-heavy effect-crt-vignette effect-glitch";
 
 // In-memory cache with TTL
 let themesCache: ThemeConfig[] | null = null;

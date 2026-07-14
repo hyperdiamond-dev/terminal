@@ -367,10 +367,24 @@ export default function VideoPlayer({
 
   if (error.value) {
     return (
-      <div class="w-full p-6 border-2 border-t-accent bg-decay-void">
-        <p class="text-t-accent text-sm font-mono text-shadow-t-accent">
+      <div
+        role="alert"
+        class="w-full p-6 border-2 border-t-accent bg-decay-void text-center"
+      >
+        <p class="text-t-accent text-sm font-mono text-shadow-t-accent mb-4">
           &gt; ERROR: {error.value}
         </p>
+        <button
+          type="button"
+          onClick={() => {
+            error.value = null;
+            isLoading.value = true;
+            videoRef.current?.load();
+          }}
+          class="px-4 py-2 border-2 border-t-accent text-t-accent text-sm font-mono uppercase hover:bg-t-accent/20 transition-colors"
+        >
+          [ RETRY ]
+        </button>
       </div>
     );
   }

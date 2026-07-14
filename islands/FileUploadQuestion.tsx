@@ -51,6 +51,8 @@ export default function FileUploadQuestion({
   const error = useSignal<string | null>(null);
   const isDragOver = useSignal(false);
   const isLoading = useSignal(true);
+  const loadWarning = useSignal(false);
+  const loadNonce = useSignal(0);
   const previewFile = useSignal<File | null>(null);
   const previewUrl = useSignal<string | null>(null);
 
@@ -62,9 +64,12 @@ export default function FileUploadQuestion({
   // Build accept string for file input
   const acceptTypes = metadata.allowed_types?.join(",") || "";
 
-  // Load existing uploads on mount
+  // Load existing uploads on mount (and again when loadNonce bumps for retry)
   useSignalEffect(() => {
+    loadNonce.value; // subscribe so RETRY re-runs the loader
     const loadExisting = async () => {
+      isLoading.value = true;
+      loadWarning.value = false;
       try {
         const response = await fetch(
           `${apiBaseUrl}/api/upload/question/${question.id}`,
@@ -75,9 +80,12 @@ export default function FileUploadQuestion({
         if (response.ok) {
           const data = await response.json();
           uploads.value = data.uploads || [];
+        } else {
+          loadWarning.value = true;
         }
       } catch {
-        // Silently fail — uploads will appear empty
+        // Non-blocking: uploads appear empty, warning offers retry
+        loadWarning.value = true;
       } finally {
         isLoading.value = false;
       }
@@ -265,6 +273,24 @@ export default function FileUploadQuestion({
           <p class="text-t-text-muted text-sm mt-1">
             &gt; {metadata.prompt}
           </p>
+        </div>
+      )}
+
+      {/* Non-blocking notice when previous uploads could not be fetched */}
+      {loadWarning.value && (
+        <div role="status" class="mb-4 flex items-center gap-3">
+          <p class="text-t-text-muted text-sm">
+            &gt; COULD NOT LOAD PREVIOUS UPLOADS
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              loadNonce.value++;
+            }}
+            class="px-2 py-1 border border-t-text-muted text-t-text-muted text-xs font-mono uppercase hover:border-t-accent hover:text-t-accent transition-colors"
+          >
+            [ RETRY ]
+          </button>
         </div>
       )}
 

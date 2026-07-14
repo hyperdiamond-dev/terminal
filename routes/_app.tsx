@@ -1,30 +1,22 @@
 import { type PageProps } from "$fresh/server.ts";
 import Header from "../components/Header.tsx";
-import type { ThemeConfig } from "../lib/themes.ts";
+import { DEFAULT_THEME, LEGACY_STATIC_EFFECTS } from "../lib/themes.ts";
+import type { AppState } from "../lib/state.ts";
 
-// Default fallback for when no theme is resolved by route handlers
-const DEFAULT_THEME: ThemeConfig = {
-  id: "vhs",
-  label: "VHS Static",
-  cssVars: {},
-  effects: "effect-grain effect-crt-vignette effect-chromatic",
-};
-
-export default function App({ Component, url, state }: PageProps) {
+export default function App(
+  { Component, url, state }: PageProps<unknown, AppState>,
+) {
   // Extract current path
   const currentPath = url.pathname;
 
-  // Determine if this is a static page or a module page
-  const staticPages = ["/", "/about", "/login", "/register"];
-  const isStaticPage = staticPages.includes(currentPath) ||
-    !currentPath.includes("/module");
+  // Theme resolved by _middleware.ts (user cookie or default), overwritten
+  // by module routes with the module's curated theme
+  const theme = state?.resolvedTheme ?? DEFAULT_THEME;
+  const themeSource = state?.themeSource ?? "default";
 
-  // Resolve theme from route handler state (already fetched async in handlers)
-  const theme = (state?.resolvedTheme as ThemeConfig) || DEFAULT_THEME;
-
-  // Apply effect classes based on page type, with theme overrides
-  const effectClasses = isStaticPage
-    ? "effect-grain-heavy effect-crt-vignette effect-glitch"
+  // No explicit theme chosen: keep the legacy heavy-grain look
+  const effectClasses = themeSource === "default"
+    ? LEGACY_STATIC_EFFECTS
     : theme.effects;
 
   const bodyClass = [effectClasses, theme.bodyClass].filter(Boolean).join(" ");
@@ -42,7 +34,7 @@ export default function App({ Component, url, state }: PageProps) {
   const moduleName = moduleMatch ? moduleMatch[1].toUpperCase() : null;
 
   return (
-    <html>
+    <html lang="en">
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -57,9 +49,16 @@ export default function App({ Component, url, state }: PageProps) {
         class={bodyClass}
         style={Object.keys(bodyStyle).length > 0 ? bodyStyle : undefined}
       >
+        <a href="#main-content" class="skip-link">SKIP TO CONTENT</a>
         <div class="relative z-10">
-          <Header currentPath={currentPath} moduleName={moduleName} />
-          <main id="main-content" class="pt-[60px] min-h-screen">
+          <Header
+            currentPath={currentPath}
+            moduleName={moduleName}
+            themes={state?.themes ?? [DEFAULT_THEME]}
+            activeThemeId={theme.id}
+            showThemeSwitcher={themeSource !== "module"}
+          />
+          <main id="main-content" tabindex={-1} class="pt-[60px] min-h-screen">
             <Component />
           </main>
         </div>

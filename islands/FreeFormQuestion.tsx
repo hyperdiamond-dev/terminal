@@ -92,6 +92,8 @@ export default function FreeFormQuestion({
         <textarea
           value={inputValue.value}
           disabled={disabled}
+          aria-label={question.question_text || "Response"}
+          aria-required={question.is_required}
           placeholder={metadata.placeholder || "ENTER YOUR RESPONSE..."}
           rows={metadata.rows || 5}
           onInput={handleChange}

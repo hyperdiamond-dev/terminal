@@ -57,15 +57,23 @@ export default function ContentCarousel({
     a.sequence_order - b.sequence_order
   );
 
+  // Auto-advancing content is motion — respect the user's preference
+  const prefersReducedMotion = typeof globalThis.matchMedia === "function" &&
+    globalThis.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
   // State
   const currentIndex = useSignal(0);
-  const isAutoAdvanceEnabled = useSignal(autoAdvanceInterval > 0);
+  const isAutoAdvanceEnabled = useSignal(
+    autoAdvanceInterval > 0 && !prefersReducedMotion,
+  );
   const autoAdvanceTimeLeft = useSignal(autoAdvanceInterval);
   const isPaused = useSignal(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const autoAdvanceTimerRef = useRef<number | null>(null);
   const loadedImageIds = useSignal<Set<number>>(new Set());
+  const failedImageIds = useSignal<Set<number>>(new Set());
+  const retryNonce = useSignal<Record<number, number>>({});
 
   // Computed values
   const currentItem = useComputed(() => sortedContent[currentIndex.value]);
@@ -121,6 +129,12 @@ export default function ContentCarousel({
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Only act when focus is inside the carousel — a page-wide handler
+      // would hijack Arrow/Home/End for the whole document
+      if (!containerRef.current?.contains(document.activeElement)) {
+        return;
+      }
+
       // Don't intercept if user is typing in an input
       if (
         e.target instanceof HTMLInputElement ||
@@ -193,6 +207,10 @@ export default function ContentCarousel({
   return (
     <div
       ref={containerRef}
+      role="region"
+      aria-roledescription="carousel"
+      aria-label={item.title || "Module media"}
+      tabIndex={0}
       class="border-2 border-t-border bg-t-surface p-4"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -225,7 +243,10 @@ export default function ContentCarousel({
               {formatDuration(item.duration_seconds)}
             </span>
           )}
-          <span class="text-t-accent text-sm font-mono font-bold">
+          <span
+            class="text-t-accent text-sm font-mono font-bold"
+            aria-live="polite"
+          >
             {currentPosition.value} / {totalItems}
           </span>
         </div>
@@ -249,6 +270,7 @@ export default function ContentCarousel({
                         >
                           <iframe
                             src={embedUrl}
+                            title={item.title || "Embedded video"}
                             class="absolute inset-0 w-full h-full border-2 border-t-border"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowFullScreen
@@ -295,27 +317,66 @@ export default function ContentCarousel({
 
         {item.content_type === "image" && (
           <div class="border-2 border-t-border overflow-hidden bg-decay-void">
-            <div class="relative">
-              {!loadedImageIds.value.has(item.id) && (
-                <Skeleton className="absolute inset-0 h-[400px]" />
+            {failedImageIds.value.has(item.id)
+              ? (
+                <div
+                  role="alert"
+                  class="border-2 border-t-accent bg-t-accent/10 p-8 text-center"
+                >
+                  <p class="text-t-accent text-shadow-t-accent mb-4">
+                    &gt; IMAGE FAILED TO LOAD
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const remaining = new Set(failedImageIds.value);
+                      remaining.delete(item.id);
+                      failedImageIds.value = remaining;
+                      retryNonce.value = {
+                        ...retryNonce.value,
+                        [item.id]: (retryNonce.value[item.id] ?? 0) + 1,
+                      };
+                    }}
+                    class="px-4 py-2 border-2 border-t-accent text-t-accent text-sm font-mono uppercase hover:bg-t-accent/20 transition-colors"
+                  >
+                    [ RETRY ]
+                  </button>
+                </div>
+              )
+              : (
+                <div class="relative">
+                  {!loadedImageIds.value.has(item.id) && (
+                    <Skeleton className="absolute inset-0 h-[400px]" />
+                  )}
+                  <img
+                    key={`${item.id}-${retryNonce.value[item.id] ?? 0}`}
+                    src={(retryNonce.value[item.id] ?? 0) > 0
+                      ? `${item.url}${
+                        item.url.includes("?") ? "&" : "?"
+                      }retry=${retryNonce.value[item.id]}`
+                      : item.url}
+                    alt={item.title || "Content image"}
+                    class={`w-full h-auto object-contain max-h-[600px] transition-opacity ${
+                      loadedImageIds.value.has(item.id)
+                        ? "opacity-100"
+                        : "opacity-0"
+                    }`}
+                    loading="lazy"
+                    onLoad={() => {
+                      loadedImageIds.value = new Set([
+                        ...loadedImageIds.value,
+                        item.id,
+                      ]);
+                    }}
+                    onError={() => {
+                      failedImageIds.value = new Set([
+                        ...failedImageIds.value,
+                        item.id,
+                      ]);
+                    }}
+                  />
+                </div>
               )}
-              <img
-                src={item.url}
-                alt={item.title || "Content image"}
-                class={`w-full h-auto object-contain max-h-[600px] transition-opacity ${
-                  loadedImageIds.value.has(item.id)
-                    ? "opacity-100"
-                    : "opacity-0"
-                }`}
-                loading="lazy"
-                onLoad={() => {
-                  loadedImageIds.value = new Set([
-                    ...loadedImageIds.value,
-                    item.id,
-                  ]);
-                }}
-              />
-            </div>
             {(item.title || item.description) && (
               <div class="p-4 border-t-2 border-t-border bg-t-surface">
                 {item.title && (
@@ -364,13 +425,18 @@ export default function ContentCarousel({
                         : "bg-transparent border-t-text-muted hover:border-t-accent"
                     }`}
                     aria-label={`Go to item ${index + 1}`}
+                    aria-current={index === currentIndex.value
+                      ? "true"
+                      : undefined}
                   />
                 ))
               )
               : (
                 // Show position indicator for many items
                 <span class="text-t-text-muted text-xs font-mono">
-                  ● ● ● {currentPosition.value} / {totalItems} ● ● ●
+                  <span aria-hidden="true">● ● ●&nbsp;</span>
+                  {currentPosition.value} / {totalItems}
+                  <span aria-hidden="true">&nbsp;● ● ●</span>
                 </span>
               )}
           </div>

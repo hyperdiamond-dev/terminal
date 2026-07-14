@@ -4,18 +4,97 @@
  * This module provides a type-safe client for interacting with the Utopia research platform API.
  */
 
-export const API_BASE_URL = Deno.env.get("API_BASE_URL") ||
+// Guarded Deno access: this module is also bundled into islands, where
+// Deno does not exist (islands receive the base URL via props instead).
+const env = (name: string): string | undefined =>
+  typeof Deno !== "undefined" ? Deno.env.get(name) : undefined;
+
+export const API_BASE_URL = env("API_BASE_URL") ||
   "http://localhost:3001";
 
 // Browser-facing API URL, passed to islands for client-side fetches. Needed
 // when the server-side URL is not reachable from the browser (e.g. Docker
 // service hostnames like http://utopia:3001).
-export const PUBLIC_API_BASE_URL = Deno.env.get("PUBLIC_API_BASE_URL") ||
+export const PUBLIC_API_BASE_URL = env("PUBLIC_API_BASE_URL") ||
   API_BASE_URL;
 
-export interface ApiError {
+export interface ApiErrorBody {
   error: string;
   details?: unknown;
+}
+
+const DEFAULT_TIMEOUT_MS = 15_000;
+
+/**
+ * Error thrown by API calls. `status` is the HTTP status code, or 0 for
+ * network failures and timeouts (no response received).
+ */
+export class ApiError extends Error {
+  readonly status: number;
+  readonly details?: unknown;
+
+  constructor(message: string, status: number, details?: unknown) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.details = details;
+  }
+
+  get isAuthError(): boolean {
+    return this.status === 401;
+  }
+
+  get isRetryable(): boolean {
+    return this.status === 0 || this.status >= 500 ||
+      this.status === 408 || this.status === 429;
+  }
+}
+
+/**
+ * Standalone request helper for route handlers and islands that talk to the
+ * API outside the singleton client. Throws ApiError with the same semantics
+ * as ApiClient.request().
+ */
+export async function apiRequest<T>(
+  baseUrl: string,
+  path: string,
+  opts: {
+    method?: string;
+    token?: string;
+    body?: unknown;
+    timeoutMs?: number;
+  } = {},
+): Promise<T> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (opts.token) {
+    headers["Authorization"] = `Bearer ${opts.token}`;
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}${path}`, {
+      method: opts.method ?? "GET",
+      headers,
+      body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+      signal: AbortSignal.timeout(opts.timeoutMs ?? DEFAULT_TIMEOUT_MS),
+    });
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "TimeoutError") {
+      throw new ApiError("REQUEST TIMED OUT", 0);
+    }
+    throw new ApiError("NETWORK ERROR — BACKEND UNREACHABLE", 0);
+  }
+
+  if (!response.ok) {
+    const body: ApiErrorBody = await response.json().catch(() => ({
+      error: "An unknown error occurred",
+    }));
+    throw new ApiError(body.error, response.status, body.details);
+  }
+
+  return response.json();
 }
 
 export interface User {
@@ -156,16 +235,25 @@ class ApiClient {
       headers["Authorization"] = `Bearer ${this.token}`;
     }
 
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...options,
-      headers,
-    });
+    let response: Response;
+    try {
+      response = await fetch(`${this.baseUrl}${endpoint}`, {
+        ...options,
+        headers,
+        signal: options.signal ?? AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
+      });
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "TimeoutError") {
+        throw new ApiError("REQUEST TIMED OUT", 0);
+      }
+      throw new ApiError("NETWORK ERROR — BACKEND UNREACHABLE", 0);
+    }
 
     if (!response.ok) {
-      const error: ApiError = await response.json().catch(() => ({
+      const error: ApiErrorBody = await response.json().catch(() => ({
         error: "An unknown error occurred",
       }));
-      throw new Error(`${error.error} (HTTP ${response.status})`);
+      throw new ApiError(error.error, response.status, error.details);
     }
 
     return response.json();

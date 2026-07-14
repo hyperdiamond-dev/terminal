@@ -91,6 +91,7 @@ export default function NoteQuestion({
       <div class="relative">
         <textarea
           value={inputValue.value}
+          aria-label={question.question_text || "Notes"}
           placeholder={metadata.placeholder || "ENTER YOUR NOTES HERE..."}
           rows={6}
           onInput={handleChange}

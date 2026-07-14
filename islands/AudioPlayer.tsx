@@ -401,10 +401,24 @@ export default function AudioPlayer({
           )
           : error.value
           ? (
-            <div className="h-32 flex items-center justify-center">
+            <div
+              role="alert"
+              className="h-32 flex flex-col items-center justify-center gap-3"
+            >
               <div className="text-analog-red-dim text-xs">
                 &gt; ERROR: {error.value}
               </div>
+              <button
+                type="button"
+                onClick={() => {
+                  error.value = null;
+                  audioRef.current?.load();
+                  generateWaveform();
+                }}
+                className="px-3 py-1 border-2 border-t-accent text-t-accent text-xs font-mono uppercase hover:bg-t-accent/20 transition-colors"
+              >
+                [ RETRY ]
+              </button>
             </div>
           )
           : (

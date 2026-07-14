@@ -2,10 +2,13 @@ import { Handlers, PageProps } from "$fresh/server.ts";
 import ModuleQuestionnaire from "../../islands/ModuleQuestionnaire.tsx";
 import MediaContent from "../../components/MediaContent.tsx";
 import Breadcrumbs, { BreadcrumbItem } from "../../components/Breadcrumbs.tsx";
+import WarningBanner from "../../components/WarningBanner.tsx";
 import { getAuthToken } from "../../lib/cookies.ts";
 import { getTheme } from "../../lib/themes.ts";
 import {
   API_BASE_URL,
+  ApiError,
+  apiRequest,
   type ContentItem,
   PUBLIC_API_BASE_URL,
 } from "../../lib/api.ts";
@@ -67,7 +70,9 @@ interface ModuleData {
   submodules?: SubmoduleInfo[];
   questions?: QuestionInfo[];
   content?: ContentItem[];
+  warnings?: string[];
   error?: string;
+  errorStatus?: number;
   authToken?: string;
   apiBaseUrl?: string;
 }
@@ -87,90 +92,78 @@ export const handler: Handlers<ModuleData> = {
 
     try {
       // Fetch module details
-      const moduleResponse = await fetch(
-        `${API_BASE_URL}/api/modules/${name}`,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
-
-      if (!moduleResponse.ok) {
-        if (moduleResponse.status === 401) {
+      let moduleData: ModuleData;
+      try {
+        moduleData = await apiRequest<ModuleData>(
+          API_BASE_URL,
+          `/api/modules/${name}`,
+          { token: authToken },
+        );
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
           return new Response(null, {
             status: 303,
             headers: { Location: "/" },
           });
         }
-        if (moduleResponse.status === 403) {
+        if (err instanceof ApiError && err.status === 403) {
           // Module not accessible - redirect to modules list
           return new Response(null, {
             status: 303,
             headers: { Location: "/modules" },
           });
         }
-        throw new Error("Failed to fetch module");
+        throw err;
       }
 
-      const moduleData = await moduleResponse.json();
+      // Secondary fetches are non-blocking: failures surface as warnings
+      const warnings: string[] = [];
 
       // Fetch submodules
-      const submodulesResponse = await fetch(
-        `${API_BASE_URL}/api/modules/${name}/submodules`,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
-
       let submodules: SubmoduleInfo[] = [];
-      if (submodulesResponse.ok) {
-        const submodulesData = await submodulesResponse.json();
+      try {
+        const submodulesData = await apiRequest<
+          { submodules?: SubmoduleInfo[] }
+        >(API_BASE_URL, `/api/modules/${name}/submodules`, {
+          token: authToken,
+        });
         submodules = submodulesData.submodules || [];
+      } catch {
+        warnings.push("SECTIONS UNAVAILABLE");
       }
 
       // Fetch media content for this module
       let content: ContentItem[] = [];
       if (moduleData.module?.id) {
-        const contentResponse = await fetch(
-          `${API_BASE_URL}/api/content/module/${moduleData.module.id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-              "Content-Type": "application/json",
-            },
-          },
-        );
-        if (contentResponse.ok) {
-          const contentData = await contentResponse.json();
+        try {
+          const contentData = await apiRequest<{ content?: ContentItem[] }>(
+            API_BASE_URL,
+            `/api/content/module/${moduleData.module.id}`,
+            { token: authToken },
+          );
           content = contentData.content || [];
+        } catch {
+          warnings.push("MEDIA CONTENT UNAVAILABLE");
         }
       }
 
       // If no submodules, fetch questions directly
       let questions: QuestionInfo[] = [];
       if (submodules.length === 0) {
-        const questionsResponse = await fetch(
-          `${API_BASE_URL}/api/modules/${name}/questions`,
-          {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-              "Content-Type": "application/json",
-            },
-          },
-        );
-
-        if (questionsResponse.ok) {
-          const questionsData = await questionsResponse.json();
+        try {
+          const questionsData = await apiRequest<
+            { questions?: QuestionInfo[] }
+          >(API_BASE_URL, `/api/modules/${name}/questions`, {
+            token: authToken,
+          });
           questions = questionsData.questions || [];
+        } catch {
+          warnings.push("QUESTIONS UNAVAILABLE");
         }
       }
 
       ctx.state.resolvedTheme = await getTheme(moduleData.module?.style_theme);
+      ctx.state.themeSource = "module";
       return ctx.render({
         module: moduleData.module,
         progress: moduleData.progress,
@@ -180,12 +173,14 @@ export const handler: Handlers<ModuleData> = {
         submodules,
         questions,
         content,
+        warnings,
         authToken,
         apiBaseUrl: PUBLIC_API_BASE_URL,
       });
     } catch (error) {
       return ctx.render({
         error: error instanceof Error ? error.message : "Unknown error",
+        errorStatus: error instanceof ApiError ? error.status : undefined,
       });
     }
   },
@@ -274,7 +269,7 @@ function SubmoduleCard(
   );
 }
 
-export default function ModulePage({ data }: PageProps<ModuleData>) {
+export default function ModulePage({ data, url }: PageProps<ModuleData>) {
   if (data?.error) {
     return (
       <div class="container mx-auto py-8 px-4">
@@ -284,16 +279,25 @@ export default function ModulePage({ data }: PageProps<ModuleData>) {
               ERROR
             </h1>
 
-            <div class="my-8 px-4 space-y-4">
+            <div class="my-8 px-4 space-y-4" role="alert">
               <p class="text-lg text-t-text-dim">
                 &gt; FAILED TO LOAD MODULE
               </p>
               <p class="text-lg text-t-accent text-shadow-t-accent">
                 &gt; {data.error}
               </p>
+              <p class="text-sm text-t-text-muted">
+                &gt; {data.errorStatus ? `HTTP ${data.errorStatus}` : "NETWORK"}
+              </p>
             </div>
 
-            <div class="my-8">
+            <div class="my-8 flex flex-wrap justify-center gap-4">
+              <a
+                href={url.pathname}
+                class="inline-block border-2 border-t-accent px-8 py-4 text-t-accent font-bold uppercase text-lg transition-colors shadow-t-glow bg-t-surface hover:bg-t-surface-light"
+              >
+                &gt; RETRY
+              </a>
               <a
                 href="/modules"
                 class="inline-block border-2 border-t-accent-secondary px-8 py-4 text-t-accent-secondary font-bold uppercase text-lg transition-colors shadow-t-glow bg-t-surface hover:bg-t-surface-light"
@@ -315,6 +319,7 @@ export default function ModulePage({ data }: PageProps<ModuleData>) {
     submodules = [],
     questions = [],
     content = [],
+    warnings = [],
     authToken,
     apiBaseUrl,
   } = data;
@@ -336,6 +341,8 @@ export default function ModulePage({ data }: PageProps<ModuleData>) {
         <div class="max-w-screen-md mx-auto">
           {/* Breadcrumbs */}
           <Breadcrumbs items={breadcrumbs} />
+
+          <WarningBanner warnings={warnings} />
 
           {/* Module Header */}
           <div class="text-center my-8">

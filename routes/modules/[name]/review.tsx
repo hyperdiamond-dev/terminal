@@ -1,6 +1,12 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
 import QuestionRenderer from "../../../islands/QuestionRenderer.tsx";
-import { API_BASE_URL, PUBLIC_API_BASE_URL } from "../../../lib/api.ts";
+import {
+  API_BASE_URL,
+  ApiError,
+  apiRequest,
+  PUBLIC_API_BASE_URL,
+} from "../../../lib/api.ts";
+import WarningBanner from "../../../components/WarningBanner.tsx";
 import { getAuthToken } from "../../../lib/cookies.ts";
 import { getTheme } from "../../../lib/themes.ts";
 
@@ -36,7 +42,9 @@ interface ReviewData {
   responses?: Record<string, unknown>;
   questions?: QuestionInfo[];
   completed_at?: string;
+  warnings?: string[];
   error?: string;
+  errorStatus?: number;
   authToken?: string;
   apiBaseUrl?: string;
 }
@@ -56,33 +64,28 @@ export const handler: Handlers<ReviewData> = {
 
     try {
       // Fetch module data
-      const moduleResponse = await fetch(
-        `${API_BASE_URL}/api/modules/${moduleName}`,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
-
-      if (!moduleResponse.ok) {
-        if (moduleResponse.status === 401) {
+      let moduleData: ReviewData & { is_completed?: boolean };
+      try {
+        moduleData = await apiRequest<ReviewData & { is_completed?: boolean }>(
+          API_BASE_URL,
+          `/api/modules/${moduleName}`,
+          { token: authToken },
+        );
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
           return new Response(null, {
             status: 303,
             headers: { Location: "/" },
           });
         }
-        if (moduleResponse.status === 403) {
+        if (err instanceof ApiError && err.status === 403) {
           return new Response(null, {
             status: 303,
             headers: { Location: "/modules" },
           });
         }
-        throw new Error("Failed to fetch module");
+        throw err;
       }
-
-      const moduleData = await moduleResponse.json();
 
       // Check if module is completed (review mode only for completed modules)
       if (!moduleData.is_completed) {
@@ -92,60 +95,58 @@ export const handler: Handlers<ReviewData> = {
         });
       }
 
-      // Fetch module responses
-      const responsesResponse = await fetch(
-        `${API_BASE_URL}/api/modules/${moduleName}/responses`,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
+      // Secondary fetches are non-blocking: failures surface as warnings
+      const warnings: string[] = [];
 
+      // Fetch module responses
       let responses: Record<string, unknown> = {};
       let completedAt: string | undefined;
-      if (responsesResponse.ok) {
-        const data = await responsesResponse.json();
+      try {
+        const data = await apiRequest<
+          { responses?: Record<string, unknown>; completed_at?: string }
+        >(API_BASE_URL, `/api/modules/${moduleName}/responses`, {
+          token: authToken,
+        });
         responses = data.responses || {};
         completedAt = data.completed_at;
+      } catch {
+        warnings.push("RESPONSES UNAVAILABLE");
       }
 
       // Fetch questions
-      const questionsResponse = await fetch(
-        `${API_BASE_URL}/api/modules/${moduleName}/questions`,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
-
       let questions: QuestionInfo[] = [];
-      if (questionsResponse.ok) {
-        const data = await questionsResponse.json();
+      try {
+        const data = await apiRequest<{ questions?: QuestionInfo[] }>(
+          API_BASE_URL,
+          `/api/modules/${moduleName}/questions`,
+          { token: authToken },
+        );
         questions = data.questions || [];
+      } catch {
+        warnings.push("QUESTIONS UNAVAILABLE");
       }
 
       ctx.state.resolvedTheme = await getTheme(moduleData.module?.style_theme);
+      ctx.state.themeSource = "module";
       return ctx.render({
         module: moduleData.module,
         responses,
         questions,
         completed_at: completedAt,
+        warnings,
         authToken,
         apiBaseUrl: PUBLIC_API_BASE_URL,
       });
     } catch (error) {
       return ctx.render({
         error: error instanceof Error ? error.message : "Unknown error",
+        errorStatus: error instanceof ApiError ? error.status : undefined,
       });
     }
   },
 };
 
-export default function ReviewPage({ data }: PageProps<ReviewData>) {
+export default function ReviewPage({ data, url }: PageProps<ReviewData>) {
   if (data?.error) {
     return (
       <div class="container mx-auto py-8 px-4">
@@ -155,16 +156,25 @@ export default function ReviewPage({ data }: PageProps<ReviewData>) {
               ERROR
             </h1>
 
-            <div class="my-8 px-4 space-y-4">
+            <div class="my-8 px-4 space-y-4" role="alert">
               <p class="text-lg text-t-text-dim">
                 &gt; FAILED TO LOAD REVIEW
               </p>
               <p class="text-lg text-t-accent text-shadow-t-accent">
                 &gt; {data.error}
               </p>
+              <p class="text-sm text-t-text-muted">
+                &gt; {data.errorStatus ? `HTTP ${data.errorStatus}` : "NETWORK"}
+              </p>
             </div>
 
-            <div class="my-8">
+            <div class="my-8 flex flex-wrap justify-center gap-4">
+              <a
+                href={url.pathname}
+                class="inline-block border-2 border-t-accent px-8 py-4 text-t-accent font-bold uppercase text-lg transition-colors shadow-t-glow bg-t-surface hover:bg-t-surface-light"
+              >
+                &gt; RETRY
+              </a>
               <a
                 href="/modules"
                 class="inline-block border-2 border-t-accent-secondary px-8 py-4 text-t-accent-secondary font-bold uppercase text-lg transition-colors shadow-t-glow bg-t-surface hover:bg-t-surface-light"
@@ -178,7 +188,13 @@ export default function ReviewPage({ data }: PageProps<ReviewData>) {
     );
   }
 
-  const { module, responses = {}, questions = [], completed_at } = data;
+  const {
+    module,
+    responses = {},
+    questions = [],
+    completed_at,
+    warnings = [],
+  } = data;
 
   return (
     <>
@@ -193,6 +209,8 @@ export default function ReviewPage({ data }: PageProps<ReviewData>) {
               &lt; BACK TO MODULES
             </a>
           </div>
+
+          <WarningBanner warnings={warnings} />
 
           {/* Header */}
           <div class="text-center my-8">

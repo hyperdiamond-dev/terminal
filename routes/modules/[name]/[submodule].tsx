@@ -4,10 +4,13 @@ import MediaContent from "../../../components/MediaContent.tsx";
 import Breadcrumbs, {
   BreadcrumbItem,
 } from "../../../components/Breadcrumbs.tsx";
+import WarningBanner from "../../../components/WarningBanner.tsx";
 import { getAuthToken } from "../../../lib/cookies.ts";
 import { getTheme } from "../../../lib/themes.ts";
 import {
   API_BASE_URL,
+  ApiError,
+  apiRequest,
   type ContentItem,
   PUBLIC_API_BASE_URL,
 } from "../../../lib/api.ts";
@@ -55,7 +58,9 @@ interface SubmoduleData {
   is_completed?: boolean;
   questions?: QuestionInfo[];
   content?: ContentItem[];
+  warnings?: string[];
   error?: string;
+  errorStatus?: number;
   authToken?: string;
   apiBaseUrl?: string;
 }
@@ -74,88 +79,75 @@ export const handler: Handlers<SubmoduleData> = {
     const { name: moduleName, submodule: submoduleName } = ctx.params;
 
     try {
+      // Secondary fetches are non-blocking: failures surface as warnings
+      const warnings: string[] = [];
+
       // Fetch parent module to get style_theme
-      const parentModuleResponse = await fetch(
-        `${API_BASE_URL}/api/modules/${moduleName}`,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
       let parentStyleTheme: string | null = null;
-      if (parentModuleResponse.ok) {
-        const parentData = await parentModuleResponse.json();
+      try {
+        const parentData = await apiRequest<
+          { module?: { style_theme?: string | null } }
+        >(API_BASE_URL, `/api/modules/${moduleName}`, { token: authToken });
         parentStyleTheme = parentData.module?.style_theme || null;
+      } catch {
+        // Theme falls back to default; page still renders
       }
 
       // Fetch submodule details
-      const submoduleResponse = await fetch(
-        `${API_BASE_URL}/api/modules/${moduleName}/submodules/${submoduleName}`,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
-
-      if (!submoduleResponse.ok) {
-        if (submoduleResponse.status === 401) {
+      let submoduleData: SubmoduleData;
+      try {
+        submoduleData = await apiRequest<SubmoduleData>(
+          API_BASE_URL,
+          `/api/modules/${moduleName}/submodules/${submoduleName}`,
+          { token: authToken },
+        );
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
           return new Response(null, {
             status: 303,
             headers: { Location: "/" },
           });
         }
-        if (submoduleResponse.status === 403) {
+        if (err instanceof ApiError && err.status === 403) {
           // Submodule not accessible - redirect to module
           return new Response(null, {
             status: 303,
             headers: { Location: `/modules/${moduleName}` },
           });
         }
-        throw new Error("Failed to fetch submodule");
+        throw err;
       }
 
-      const submoduleData = await submoduleResponse.json();
-
       // Fetch questions for submodule
-      const questionsResponse = await fetch(
-        `${API_BASE_URL}/api/submodules/${submoduleName}/questions`,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
-
       let questions: QuestionInfo[] = [];
-      if (questionsResponse.ok) {
-        const questionsData = await questionsResponse.json();
+      try {
+        const questionsData = await apiRequest<{ questions?: QuestionInfo[] }>(
+          API_BASE_URL,
+          `/api/submodules/${submoduleName}/questions`,
+          { token: authToken },
+        );
         questions = questionsData.questions || [];
+      } catch {
+        warnings.push("QUESTIONS UNAVAILABLE");
       }
 
       // Fetch media content for this submodule
       let content: ContentItem[] = [];
       if (submoduleData.submodule?.id) {
-        const contentResponse = await fetch(
-          `${API_BASE_URL}/api/content/submodule/${submoduleData.submodule.id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-              "Content-Type": "application/json",
-            },
-          },
-        );
-        if (contentResponse.ok) {
-          const contentData = await contentResponse.json();
+        try {
+          const contentData = await apiRequest<{ content?: ContentItem[] }>(
+            API_BASE_URL,
+            `/api/content/submodule/${submoduleData.submodule.id}`,
+            { token: authToken },
+          );
           content = contentData.content || [];
+        } catch {
+          warnings.push("MEDIA CONTENT UNAVAILABLE");
         }
       }
 
       ctx.state.resolvedTheme = await getTheme(parentStyleTheme);
+      ctx.state.themeSource = "module";
       return ctx.render({
         module: {
           name: moduleName,
@@ -168,18 +160,22 @@ export const handler: Handlers<SubmoduleData> = {
         is_completed: submoduleData.progress?.status === "COMPLETED",
         questions,
         content,
+        warnings,
         authToken,
         apiBaseUrl: PUBLIC_API_BASE_URL,
       });
     } catch (error) {
       return ctx.render({
         error: error instanceof Error ? error.message : "Unknown error",
+        errorStatus: error instanceof ApiError ? error.status : undefined,
       });
     }
   },
 };
 
-export default function SubmodulePage({ data }: PageProps<SubmoduleData>) {
+export default function SubmodulePage(
+  { data, url }: PageProps<SubmoduleData>,
+) {
   if (data?.error) {
     return (
       <>
@@ -190,16 +186,26 @@ export default function SubmodulePage({ data }: PageProps<SubmoduleData>) {
                 ERROR
               </h1>
 
-              <div class="my-8 px-4 space-y-4">
+              <div class="my-8 px-4 space-y-4" role="alert">
                 <p class="text-lg text-t-text-dim">
                   &gt; FAILED TO LOAD SECTION
                 </p>
                 <p class="text-lg text-t-accent text-shadow-t-accent">
                   &gt; {data.error}
                 </p>
+                <p class="text-sm text-t-text-muted">
+                  &gt;{" "}
+                  {data.errorStatus ? `HTTP ${data.errorStatus}` : "NETWORK"}
+                </p>
               </div>
 
-              <div class="my-8">
+              <div class="my-8 flex flex-wrap justify-center gap-4">
+                <a
+                  href={url.pathname}
+                  class="inline-block border-2 border-t-accent px-8 py-4 text-t-accent font-bold uppercase text-lg transition-colors shadow-t-glow text-shadow-void-text bg-t-surface hover:bg-t-surface-light"
+                >
+                  &gt; RETRY
+                </a>
                 <a
                   href={`/modules/${data.module?.name || ""}`}
                   class="inline-block border-2 border-t-accent-secondary px-8 py-4 text-t-accent-secondary font-bold uppercase text-lg transition-colors shadow-t-glow text-shadow-void-text bg-t-surface hover:bg-t-surface-light"
@@ -221,6 +227,7 @@ export default function SubmodulePage({ data }: PageProps<SubmoduleData>) {
     is_completed,
     questions = [],
     content = [],
+    warnings = [],
     authToken,
     apiBaseUrl,
   } = data;
@@ -243,6 +250,8 @@ export default function SubmodulePage({ data }: PageProps<SubmoduleData>) {
         <div class="max-w-screen-md mx-auto">
           {/* Breadcrumbs */}
           <Breadcrumbs items={breadcrumbs} />
+
+          <WarningBanner warnings={warnings} />
 
           {/* Submodule Header */}
           <div class="text-center my-8">

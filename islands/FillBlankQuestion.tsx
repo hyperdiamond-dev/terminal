@@ -90,6 +90,8 @@ export default function FillBlankQuestion({
           type="text"
           value={inputValue.value}
           disabled={disabled}
+          aria-label={question.question_text || "Response"}
+          aria-required={question.is_required}
           placeholder={metadata.placeholder || "ENTER RESPONSE..."}
           onInput={handleChange}
           onFocus={() => (isFocused.value = true)}

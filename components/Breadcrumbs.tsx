@@ -43,7 +43,10 @@ export default function Breadcrumbs(
                     class="text-t-text-muted hover:text-t-accent transition-colors font-mono uppercase text-xs tracking-wide group"
                   >
                     {item.icon && (
-                      <span class="text-t-text-muted group-hover:text-t-accent mr-1">
+                      <span
+                        class="text-t-text-muted group-hover:text-t-accent mr-1"
+                        aria-hidden="true"
+                      >
                         {item.icon}
                       </span>
                     )}
@@ -51,9 +54,12 @@ export default function Breadcrumbs(
                   </a>
                 )
                 : (
-                  <span class="text-t-text font-mono uppercase text-xs tracking-wide font-bold">
+                  <span
+                    class="text-t-text font-mono uppercase text-xs tracking-wide font-bold"
+                    aria-current={isLast ? "page" : undefined}
+                  >
                     {item.icon && (
-                      <span class="text-t-accent mr-1">
+                      <span class="text-t-accent mr-1" aria-hidden="true">
                         {item.icon}
                       </span>
                     )}

@@ -8,7 +8,22 @@ interface LoginData {
 }
 
 export const handler: Handlers<LoginData> = {
-  GET(req, ctx) {
+  async GET(req, ctx) {
+    const url = new URL(req.url);
+    const error = url.searchParams.get("error");
+
+    // An error param means we were sent here deliberately (e.g. session
+    // expired mid-questionnaire) — show the message and drop the stale
+    // cookie instead of bouncing to /dashboard on its presence.
+    if (error) {
+      const response = await ctx.render({ error });
+      response.headers.append(
+        "Set-Cookie",
+        "auth_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax",
+      );
+      return response;
+    }
+
     const authToken = getAuthToken(req);
     if (authToken) {
       return new Response(null, {
@@ -17,9 +32,7 @@ export const handler: Handlers<LoginData> = {
       });
     }
 
-    const url = new URL(req.url);
-    const error = url.searchParams.get("error");
-    return ctx.render({ error: error || undefined });
+    return ctx.render({});
   },
 
   async POST(req, ctx) {
@@ -90,7 +103,10 @@ export default function LoginPage({ data }: PageProps<LoginData>) {
           </div>
 
           {data?.error && (
-            <div class="my-6 border-2 border-analog-red bg-analog-red/10 px-4 py-3">
+            <div
+              role="alert"
+              class="my-6 border-2 border-analog-red bg-analog-red/10 px-4 py-3"
+            >
               <p class="text-analog-red text-shadow-vhs-red">
                 &gt; ERROR: {data.error}
               </p>
@@ -99,29 +115,37 @@ export default function LoginPage({ data }: PageProps<LoginData>) {
 
           <form method="POST" class="my-8 space-y-6">
             <div>
-              <label class="block text-sm text-vhs-gray uppercase mb-2">
+              <label
+                for="login-username"
+                class="block text-sm text-vhs-gray uppercase mb-2"
+              >
                 &gt; USERNAME
               </label>
               <input
+                id="login-username"
                 type="text"
                 name="username"
                 required
                 autocomplete="username"
-                class="w-full max-w-sm mx-auto block bg-decay-smoke/50 border-2 border-vhs-gray-dark px-4 py-3 text-vhs-white font-mono text-lg focus:border-analog-purple focus:outline-none transition-colors"
+                class="w-full max-w-sm mx-auto block bg-decay-smoke/50 border-2 border-vhs-gray-dark px-4 py-3 text-vhs-white font-mono text-lg focus:border-analog-purple transition-colors"
                 placeholder="e.g. BraveTiger"
               />
             </div>
 
             <div>
-              <label class="block text-sm text-vhs-gray uppercase mb-2">
+              <label
+                for="login-password"
+                class="block text-sm text-vhs-gray uppercase mb-2"
+              >
                 &gt; PASSWORD
               </label>
               <input
+                id="login-password"
                 type="password"
                 name="password"
                 required
                 autocomplete="current-password"
-                class="w-full max-w-sm mx-auto block bg-decay-smoke/50 border-2 border-vhs-gray-dark px-4 py-3 text-vhs-white font-mono text-lg focus:border-analog-purple focus:outline-none transition-colors"
+                class="w-full max-w-sm mx-auto block bg-decay-smoke/50 border-2 border-vhs-gray-dark px-4 py-3 text-vhs-white font-mono text-lg focus:border-analog-purple transition-colors"
               />
             </div>
 
